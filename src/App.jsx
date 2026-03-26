@@ -243,7 +243,7 @@ const seedData = {
     },
     {
       id: "user-3",
-      name: "Balab David",
+      name: "David Balaban",
       role: "user",
       email: "balabdavid@gmail.com",
       password: "Temp123!",
@@ -2340,14 +2340,22 @@ function loadState() {
 
     const nextState = {
       ...parsed,
-      accounts: mergedAccounts.map((account) => ({
-        ...account,
-        password: account.password ?? seedData.accounts.find((seed) => seed.id === account.id)?.password ?? "Temp123!",
-        clientSince:
-          normalizeRequestDate(account.clientSince) ??
-          seedData.accounts.find((seed) => seed.id === account.id)?.clientSince ??
-          "2024-01-01",
-      })),
+      accounts: mergedAccounts.map((account) => {
+        const seedAccount = seedData.accounts.find((seed) => seed.id === account.id);
+
+        return {
+          ...account,
+          name:
+            account.id === "user-3"
+              ? "David Balaban"
+              : account.name ?? seedAccount?.name ?? "Unnamed user",
+          password: account.password ?? seedAccount?.password ?? "Temp123!",
+          clientSince:
+            normalizeRequestDate(account.clientSince) ??
+            seedAccount?.clientSince ??
+            "2024-01-01",
+        };
+      }),
       actionLogResetVersion: ACTION_LOG_RESET_VERSION,
       items: [...savedItems, ...missingSeedItems],
     };
