@@ -1456,7 +1456,7 @@ function ItemCard({
     if (!(item.status === "To Dispose" && status === "Dispose")) {
       buttons.push({
         key: `admin-${item.id}-${status}`,
-        label: status === "Dispose" ? "To Dispose" : status === "Sell" ? "To Sell" : "Store",
+        label: status,
         className: isCurrentChoice ? "button ghost" : "button secondary",
         onClick: () => onUserStatusChoice(item.id, status),
       });
