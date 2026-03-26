@@ -1742,7 +1742,6 @@ function ItemCard({
       {canUserManageActions ? (
         <>
           <div className="field">
-            <span>Change item status</span>
             <div className="status-action-row">
               {availableStatusActions.map((status) => (
                 <button
@@ -1959,7 +1958,6 @@ function ItemCard({
 
           {adminStatusButtons.length ? (
             <div className="field">
-              <span>Change item status</span>
               <div className="status-action-row">
                 {adminStatusButtons.map((button) => (
                   <button
