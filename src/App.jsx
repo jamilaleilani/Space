@@ -1201,7 +1201,7 @@ function App() {
               </div>
             </div>
 
-            <div className="card-grid">
+            <div className="card-grid card-grid--compact">
               {filteredItems.map((item) => (
                 <ItemCard
                   key={item.id}
