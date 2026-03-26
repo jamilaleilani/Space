@@ -585,31 +585,6 @@ function App() {
 
       {session?.role === "user" ? (
         <div className="layout">
-          <section className="toolbar">
-            <label className="field">
-              <span>Search</span>
-              <input
-                value={searchTerm}
-                onChange={handleSearchChange}
-                placeholder="Search items, categories, or locations"
-              />
-            </label>
-          </section>
-
-          <section className="tab-row">
-            {USER_STATUS_TABS.map((tab) => (
-              <button
-                key={tab}
-                className={`tab-button ${selectedTab === tab ? "tab-button--active" : ""}`}
-                type="button"
-                onClick={() => setSelectedTab(tab)}
-              >
-                <span>{tab}</span>
-                <span className="tab-count">{tabCounts[tab] ?? 0}</span>
-              </button>
-            ))}
-          </section>
-
           <section className="panel workspace-panel workspace-panel--composer">
             <div className="section-heading">
               <div>
@@ -739,6 +714,31 @@ function App() {
                 </>
               )}
             </form>
+          </section>
+
+          <section className="toolbar">
+            <label className="field">
+              <span>Search</span>
+              <input
+                value={searchTerm}
+                onChange={handleSearchChange}
+                placeholder="Search items, categories, or locations"
+              />
+            </label>
+          </section>
+
+          <section className="tab-row">
+            {USER_STATUS_TABS.map((tab) => (
+              <button
+                key={tab}
+                className={`tab-button ${selectedTab === tab ? "tab-button--active" : ""}`}
+                type="button"
+                onClick={() => setSelectedTab(tab)}
+              >
+                <span>{tab}</span>
+                <span className="tab-count">{tabCounts[tab] ?? 0}</span>
+              </button>
+            ))}
           </section>
 
           <section className="panel workspace-panel workspace-panel--inventory">
