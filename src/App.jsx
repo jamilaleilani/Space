@@ -61,6 +61,164 @@ const SAMPLE_ITEM_IMAGES = {
       <path d="M56 198h108M122 198h94"/>
     `,
   }),
+  "item-5": makeIllustration({
+    title: "Ceramic Lamp",
+    background: "#3d2b36",
+    accent: "#faf5ff",
+    detail: "#f9a8d4",
+    body: `
+      <path d="M126 66 84 118h84z"/>
+      <path d="M126 118v44"/>
+      <path d="M106 162h40"/>
+      <path d="M94 194h64"/>
+      <path d="M102 194v-18h48v18"/>
+    `,
+  }),
+  "item-6": makeIllustration({
+    title: "Acoustic Guitar",
+    background: "#3f2a1c",
+    accent: "#fff7ed",
+    detail: "#fdba74",
+    body: `
+      <path d="M150 74v120"/>
+      <path d="M136 76h28"/>
+      <path d="M124 114c-18 0-28 14-28 34s14 34 34 34c22 0 34-12 34-30 0-10-6-18-14-24-6-4-10-14-10-14s-4 0-16 0z"/>
+      <circle cx="138" cy="148" r="8"/>
+      <path d="M150 86 166 100"/>
+    `,
+  }),
+  "item-7": makeIllustration({
+    title: "Record Crate",
+    background: "#243447",
+    accent: "#f8fafc",
+    detail: "#93c5fd",
+    body: `
+      <rect x="62" y="98" width="128" height="88" rx="10"/>
+      <path d="M82 86v100"/>
+      <path d="M170 86v100"/>
+      <path d="M94 84h64"/>
+      <circle cx="126" cy="142" r="18"/>
+      <circle cx="126" cy="142" r="4"/>
+    `,
+  }),
+  "item-8": makeIllustration({
+    title: "Bench Cushion Set",
+    background: "#2f3f2b",
+    accent: "#f7fee7",
+    detail: "#bef264",
+    body: `
+      <rect x="56" y="112" width="140" height="34" rx="12"/>
+      <rect x="64" y="82" width="42" height="28" rx="10"/>
+      <rect x="110" y="82" width="42" height="28" rx="10"/>
+      <rect x="156" y="82" width="32" height="28" rx="10"/>
+      <path d="M76 112v34M122 112v34M166 112v34"/>
+    `,
+  }),
+  "item-9": makeIllustration({
+    title: "Floor Mirror",
+    background: "#202834",
+    accent: "#f8fafc",
+    detail: "#cbd5e1",
+    body: `
+      <rect x="80" y="52" width="92" height="150" rx="14"/>
+      <path d="M92 64h68v126H92z"/>
+      <path d="M96 206 82 224"/>
+      <path d="M156 206 170 224"/>
+    `,
+  }),
+  "item-10": makeIllustration({
+    title: "Coffee Table",
+    background: "#4b3621",
+    accent: "#fefce8",
+    detail: "#fde68a",
+    body: `
+      <rect x="54" y="96" width="144" height="20" rx="4"/>
+      <path d="M76 116 64 200"/>
+      <path d="M176 116 188 200"/>
+      <path d="M100 116 92 200"/>
+      <path d="M152 116 160 200"/>
+      <path d="M64 200h124"/>
+    `,
+  }),
+  "item-11": makeIllustration({
+    title: "Camping Lantern",
+    background: "#2a3138",
+    accent: "#f8fafc",
+    detail: "#fde047",
+    body: `
+      <path d="M96 92h60"/>
+      <path d="M108 92v-18h36v18"/>
+      <rect x="88" y="92" width="76" height="104" rx="14"/>
+      <path d="M102 116h48v46h-48z"/>
+      <path d="M96 196h60"/>
+    `,
+  }),
+  "item-12": makeIllustration({
+    title: "Side Table",
+    background: "#433226",
+    accent: "#fafaf9",
+    detail: "#d6d3d1",
+    body: `
+      <rect x="72" y="84" width="108" height="18" rx="4"/>
+      <path d="M92 102 86 188"/>
+      <path d="M160 102 166 188"/>
+      <path d="M126 102v86"/>
+      <path d="M82 188h88"/>
+    `,
+  }),
+  "item-13": makeIllustration({
+    title: "Area Rug",
+    background: "#3b233a",
+    accent: "#fdf2f8",
+    detail: "#f9a8d4",
+    body: `
+      <rect x="48" y="74" width="156" height="108" rx="12"/>
+      <path d="M68 94h116"/>
+      <path d="M68 118h116"/>
+      <path d="M68 142h116"/>
+      <path d="M68 166h116"/>
+      <path d="M58 182v18M74 182v18M90 182v18M106 182v18M122 182v18M138 182v18M154 182v18M170 182v18M186 182v18"/>
+    `,
+  }),
+  "item-14": makeIllustration({
+    title: "Patio Chairs",
+    background: "#2a3e39",
+    accent: "#f0fdf4",
+    detail: "#86efac",
+    body: `
+      <path d="M78 92h32v34H78z"/>
+      <path d="M78 126h32l8 42H70z"/>
+      <path d="M86 168v28M104 168v28"/>
+      <path d="M142 92h32v34h-32z"/>
+      <path d="M142 126h32l8 42h-48z"/>
+      <path d="M150 168v28M168 168v28"/>
+    `,
+  }),
+  "item-15": makeIllustration({
+    title: "Desk Chair",
+    background: "#253040",
+    accent: "#eff6ff",
+    detail: "#93c5fd",
+    body: `
+      <path d="M102 84h48v38h-48z"/>
+      <path d="M92 122h68l-10 32h-48z"/>
+      <path d="M126 154v30"/>
+      <path d="M96 184h60"/>
+      <path d="M126 184 88 208"/>
+      <path d="M126 184 164 208"/>
+      <path d="M126 184v28"/>
+    `,
+  }),
+  "item-16": makeIllustration({
+    title: "Glass Vase Set",
+    background: "#263445",
+    accent: "#f8fafc",
+    detail: "#7dd3fc",
+    body: `
+      <path d="M82 80h22v18l-6 18v56c0 12 10 22 22 22s22-10 22-22v-56l-6-18V80h22"/>
+      <path d="M166 102h18v18l-5 16v38c0 12-8 20-18 20s-18-8-18-20v-38l-5-16v-18h18"/>
+    `,
+  }),
 };
 
 const seedData = {
@@ -159,6 +317,222 @@ const seedData = {
       image: SAMPLE_ITEM_IMAGES["item-4"],
       notifications: [],
       updatedAt: "2026-03-23T09:20:00.000Z",
+    },
+    {
+      id: "item-5",
+      ownerId: "user-1",
+      name: "Ceramic Lamp",
+      category: "Home Decor",
+      description: "Table lamp packed for storage after the guest room refresh.",
+      status: "In Storage",
+      location: "Upper shelf C2",
+      storageRequestDate: "",
+      storageRequestWindow: "",
+      returnRequestDate: "",
+      returnRequestWindow: "",
+      returnRequestType: "",
+      completedAt: "",
+      image: SAMPLE_ITEM_IMAGES["item-5"],
+      notifications: [],
+      updatedAt: "2026-03-22T10:15:00.000Z",
+    },
+    {
+      id: "item-6",
+      ownerId: "user-1",
+      name: "Acoustic Guitar",
+      category: "Music",
+      description: "Stored in a padded case with accessories for the studio move.",
+      status: "In Storage",
+      location: "Music locker 2",
+      storageRequestDate: "",
+      storageRequestWindow: "",
+      returnRequestDate: "",
+      returnRequestWindow: "",
+      returnRequestType: "",
+      completedAt: "",
+      image: SAMPLE_ITEM_IMAGES["item-6"],
+      notifications: [],
+      updatedAt: "2026-03-21T11:40:00.000Z",
+    },
+    {
+      id: "item-7",
+      ownerId: "user-1",
+      name: "Record Crate",
+      category: "Media",
+      description: "Favorite vinyl collection boxed and labeled for safe storage.",
+      status: "In Storage",
+      location: "Media shelf B1",
+      storageRequestDate: "",
+      storageRequestWindow: "",
+      returnRequestDate: "",
+      returnRequestWindow: "",
+      returnRequestType: "",
+      completedAt: "",
+      image: SAMPLE_ITEM_IMAGES["item-7"],
+      notifications: [],
+      updatedAt: "2026-03-20T14:05:00.000Z",
+    },
+    {
+      id: "item-8",
+      ownerId: "user-1",
+      name: "Bench Cushion Set",
+      category: "Outdoor",
+      description: "Patio cushions ready to be sold after redesigning the terrace.",
+      status: "To Sell",
+      location: "Staging shelf D4",
+      storageRequestDate: "",
+      storageRequestWindow: "",
+      returnRequestDate: "",
+      returnRequestWindow: "",
+      returnRequestType: "",
+      completedAt: "",
+      image: SAMPLE_ITEM_IMAGES["item-8"],
+      notifications: [],
+      updatedAt: "2026-03-19T16:50:00.000Z",
+    },
+    {
+      id: "item-9",
+      ownerId: "user-1",
+      name: "Floor Mirror",
+      category: "Furniture",
+      description: "Tall mirror marked to sell after the bedroom renovation.",
+      status: "To Sell",
+      location: "Furniture aisle A6",
+      storageRequestDate: "",
+      storageRequestWindow: "",
+      returnRequestDate: "",
+      returnRequestWindow: "",
+      returnRequestType: "",
+      completedAt: "",
+      image: SAMPLE_ITEM_IMAGES["item-9"],
+      notifications: [],
+      updatedAt: "2026-03-18T09:30:00.000Z",
+    },
+    {
+      id: "item-10",
+      ownerId: "user-1",
+      name: "Coffee Table",
+      category: "Furniture",
+      description: "Walnut coffee table added to the sell list after moving apartments.",
+      status: "To Sell",
+      location: "Furniture staging B3",
+      storageRequestDate: "",
+      storageRequestWindow: "",
+      returnRequestDate: "",
+      returnRequestWindow: "",
+      returnRequestType: "",
+      completedAt: "",
+      image: SAMPLE_ITEM_IMAGES["item-10"],
+      notifications: [],
+      updatedAt: "2026-03-17T13:10:00.000Z",
+    },
+    {
+      id: "item-11",
+      ownerId: "user-2",
+      name: "Camping Lantern",
+      category: "Outdoor",
+      description: "Lantern packed with seasonal camping gear.",
+      status: "In Storage",
+      location: "Outdoor shelf E1",
+      storageRequestDate: "",
+      storageRequestWindow: "",
+      returnRequestDate: "",
+      returnRequestWindow: "",
+      returnRequestType: "",
+      completedAt: "",
+      image: SAMPLE_ITEM_IMAGES["item-11"],
+      notifications: [],
+      updatedAt: "2026-03-22T08:45:00.000Z",
+    },
+    {
+      id: "item-12",
+      ownerId: "user-2",
+      name: "Side Table",
+      category: "Furniture",
+      description: "Small oak side table wrapped and stored after combining rooms.",
+      status: "In Storage",
+      location: "Unit 14B shelf 2",
+      storageRequestDate: "",
+      storageRequestWindow: "",
+      returnRequestDate: "",
+      returnRequestWindow: "",
+      returnRequestType: "",
+      completedAt: "",
+      image: SAMPLE_ITEM_IMAGES["item-12"],
+      notifications: [],
+      updatedAt: "2026-03-20T12:20:00.000Z",
+    },
+    {
+      id: "item-13",
+      ownerId: "user-2",
+      name: "Area Rug",
+      category: "Home Decor",
+      description: "Rolled rug stored after updating the living room setup.",
+      status: "In Storage",
+      location: "Textile rack C1",
+      storageRequestDate: "",
+      storageRequestWindow: "",
+      returnRequestDate: "",
+      returnRequestWindow: "",
+      returnRequestType: "",
+      completedAt: "",
+      image: SAMPLE_ITEM_IMAGES["item-13"],
+      notifications: [],
+      updatedAt: "2026-03-19T10:55:00.000Z",
+    },
+    {
+      id: "item-14",
+      ownerId: "user-2",
+      name: "Patio Chairs",
+      category: "Outdoor",
+      description: "Folding chairs marked to sell after replacing the patio set.",
+      status: "To Sell",
+      location: "Outdoor staging A2",
+      storageRequestDate: "",
+      storageRequestWindow: "",
+      returnRequestDate: "",
+      returnRequestWindow: "",
+      returnRequestType: "",
+      completedAt: "",
+      image: SAMPLE_ITEM_IMAGES["item-14"],
+      notifications: [],
+      updatedAt: "2026-03-18T17:25:00.000Z",
+    },
+    {
+      id: "item-15",
+      ownerId: "user-2",
+      name: "Desk Chair",
+      category: "Office",
+      description: "Office chair listed to sell after the workspace upgrade.",
+      status: "To Sell",
+      location: "Office staging B5",
+      storageRequestDate: "",
+      storageRequestWindow: "",
+      returnRequestDate: "",
+      returnRequestWindow: "",
+      returnRequestType: "",
+      completedAt: "",
+      image: SAMPLE_ITEM_IMAGES["item-15"],
+      notifications: [],
+      updatedAt: "2026-03-17T15:05:00.000Z",
+    },
+    {
+      id: "item-16",
+      ownerId: "user-2",
+      name: "Glass Vase Set",
+      category: "Home Decor",
+      description: "Decorative vases prepared for sale after decluttering the dining room.",
+      status: "To Sell",
+      location: "Fragile staging C4",
+      storageRequestDate: "",
+      storageRequestWindow: "",
+      returnRequestDate: "",
+      returnRequestWindow: "",
+      returnRequestType: "",
+      completedAt: "",
+      image: SAMPLE_ITEM_IMAGES["item-16"],
+      notifications: [],
+      updatedAt: "2026-03-16T14:30:00.000Z",
     },
   ],
 };
@@ -1523,24 +1897,29 @@ function loadState() {
 
   try {
     const parsed = applyArchiveRules(JSON.parse(saved));
+    const savedItems = (parsed.items ?? []).map((item) => ({
+      ...item,
+      image: item.image ?? SAMPLE_ITEM_IMAGES[item.id] ?? "",
+      notifications: item.notifications ?? [],
+      returnRequestDate: item.returnRequestDate ?? "",
+      returnRequestWindow: item.returnRequestWindow ?? "",
+      returnRequestType: item.returnRequestType ?? "",
+      completedAt: item.completedAt ?? item.returnedCompletedAt ?? "",
+      storageRequestDate: item.storageRequestDate ?? "",
+      storageRequestWindow: item.storageRequestWindow ?? "",
+      status: normalizeStatus(item.status),
+    }));
+    const missingSeedItems = seedData.items.filter(
+      (seedItem) => !savedItems.some((item) => item.id === seedItem.id),
+    );
+
     return {
       ...parsed,
       accounts: (parsed.accounts ?? seedData.accounts).map((account) => ({
         ...account,
         password: account.password ?? seedData.accounts.find((seed) => seed.id === account.id)?.password ?? "Temp123!",
       })),
-      items: (parsed.items ?? []).map((item) => ({
-        ...item,
-        image: item.image ?? SAMPLE_ITEM_IMAGES[item.id] ?? "",
-        notifications: item.notifications ?? [],
-        returnRequestDate: item.returnRequestDate ?? "",
-        returnRequestWindow: item.returnRequestWindow ?? "",
-        returnRequestType: item.returnRequestType ?? "",
-        completedAt: item.completedAt ?? item.returnedCompletedAt ?? "",
-        storageRequestDate: item.storageRequestDate ?? "",
-        storageRequestWindow: item.storageRequestWindow ?? "",
-        status: normalizeStatus(item.status),
-      })),
+      items: [...savedItems, ...missingSeedItems],
     };
   } catch {
     return seedData;
