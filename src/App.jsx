@@ -2058,14 +2058,15 @@ function loadState() {
     const savedItems = (parsed.items ?? []).map((item) => ({
       ...item,
       image: item.image || SAMPLE_ITEM_IMAGES[item.id] || "",
-      notifications: item.notifications ?? [],
-      returnRequestDate: item.returnRequestDate ?? "",
+      notifications: Array.isArray(item.notifications) ? item.notifications : [],
+      returnRequestDate: normalizeRequestDate(item.returnRequestDate),
       returnRequestWindow: item.returnRequestWindow ?? "",
       returnRequestType: item.returnRequestType ?? "",
-      completedAt: item.completedAt ?? item.returnedCompletedAt ?? "",
-      storageRequestDate: item.storageRequestDate ?? "",
+      completedAt: normalizeTimestamp(item.completedAt ?? item.returnedCompletedAt),
+      storageRequestDate: normalizeRequestDate(item.storageRequestDate),
       storageRequestWindow: item.storageRequestWindow ?? "",
       status: normalizeStatus(item.status),
+      updatedAt: normalizeTimestamp(item.updatedAt) || new Date().toISOString(),
     }));
     const missingSeedItems = seedData.items.filter(
       (seedItem) => !savedItems.some((item) => item.id === seedItem.id),
@@ -2077,7 +2078,7 @@ function loadState() {
         ...account,
         password: account.password ?? seedData.accounts.find((seed) => seed.id === account.id)?.password ?? "Temp123!",
         clientSince:
-          account.clientSince ??
+          normalizeRequestDate(account.clientSince) ??
           seedData.accounts.find((seed) => seed.id === account.id)?.clientSince ??
           "2024-01-01",
       })),
@@ -2105,23 +2106,38 @@ function makeIllustration({ title, background, accent, detail, body }) {
 }
 
 function formatDate(value) {
+  const normalizedValue = normalizeTimestamp(value);
+  if (!normalizedValue) {
+    return "Unknown date";
+  }
+
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
-  }).format(new Date(value));
+  }).format(new Date(normalizedValue));
 }
 
 function formatRequestDate(value) {
+  const normalizedValue = normalizeRequestDate(value);
+  if (!normalizedValue) {
+    return "Unknown date";
+  }
+
   return new Intl.DateTimeFormat("en-US", {
     month: "long",
     day: "numeric",
     year: "numeric",
-  }).format(new Date(`${value}T12:00:00`));
+  }).format(new Date(`${normalizedValue}T12:00:00`));
 }
 
 function formatClientLength(value) {
-  const start = new Date(`${value}T12:00:00`);
+  const normalizedValue = normalizeRequestDate(value);
+  if (!normalizedValue) {
+    return "Unknown";
+  }
+
+  const start = new Date(`${normalizedValue}T12:00:00`);
   const now = new Date();
   let years = now.getFullYear() - start.getFullYear();
   let months = now.getMonth() - start.getMonth();
@@ -2140,6 +2156,22 @@ function formatClientLength(value) {
   }
 
   return `${years} year${years === 1 ? "" : "s"}, ${months} month${months === 1 ? "" : "s"}`;
+}
+
+function normalizeTimestamp(value) {
+  if (!value || typeof value !== "string") {
+    return "";
+  }
+
+  return Number.isNaN(new Date(value).getTime()) ? "" : value;
+}
+
+function normalizeRequestDate(value) {
+  if (!value || typeof value !== "string") {
+    return "";
+  }
+
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : "";
 }
 
 function statusClass(status) {
