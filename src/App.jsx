@@ -3,6 +3,7 @@ import { startTransition, useDeferredValue, useEffect, useState } from "react";
 const STORAGE_KEY = "inventory-keeper-react-v1";
 const ACTION_CHOICES = ["Store", "Sell", "Dispose"];
 const STATUS_TABS = ["In Storage", "Returned", "To Sell", "To Dispose", "Sold", "Disposed", "Archive"];
+const USER_STATUS_TABS = ["See all", ...STATUS_TABS];
 const ADMIN_STATUS_TABS = ["See all", ...STATUS_TABS];
 const RETURN_WINDOWS = ["Morning (8am-12pm)", "Afternoon (12pm-4pm)", "Evening (4pm-8pm)"];
 const RETURN_OPTIONS = ["Cancel storage", "Return at a later date"];
@@ -119,7 +120,7 @@ function App() {
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedTab, setSelectedTab] = useState("In Storage");
+  const [selectedTab, setSelectedTab] = useState("See all");
   const [selectedAdminOwner, setSelectedAdminOwner] = useState("all");
   const [draft, setDraft] = useState(emptyForm);
   const [editingId, setEditingId] = useState("");
@@ -141,15 +142,14 @@ function App() {
       : sourceItems;
 
   const filteredItems = ownerFilteredItems.filter((item) => {
-    const matchesStatus =
-      session?.role === "admin" && selectedTab === "See all" ? true : item.status === selectedTab;
+    const matchesStatus = selectedTab === "See all" ? true : item.status === selectedTab;
     const haystack = `${item.name} ${item.category} ${item.description} ${item.location}`.toLowerCase();
     const matchesSearch = haystack.includes(deferredSearch.trim().toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
   const counts = buildCounts(sourceItems);
-  const tabCounts = buildTabCounts(ownerFilteredItems, session?.role === "admin");
+  const tabCounts = buildTabCounts(ownerFilteredItems, true);
   const adminInboxItems = ownerFilteredItems
     .filter(
       (item) =>
@@ -191,7 +191,7 @@ function App() {
     setSelectedItemId("");
     startTransition(() => {
       setSearchTerm("");
-      setSelectedTab("In Storage");
+      setSelectedTab("See all");
       setSelectedAdminOwner("all");
     });
   }
@@ -604,7 +604,7 @@ function App() {
           </section>
 
           <section className="tab-row">
-            {STATUS_TABS.map((tab) => (
+            {USER_STATUS_TABS.map((tab) => (
               <button
                 key={tab}
                 className={`tab-button ${selectedTab === tab ? "tab-button--active" : ""}`}
@@ -612,6 +612,7 @@ function App() {
                 onClick={() => setSelectedTab(tab)}
               >
                 <span>{tab}</span>
+                <span className="tab-count">{tabCounts[tab] ?? 0}</span>
               </button>
             ))}
           </section>
