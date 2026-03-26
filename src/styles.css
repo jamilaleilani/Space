@@ -213,8 +213,11 @@ textarea {
   overflow-x: hidden;
 }
 
-.card-grid--compact {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.card-grid.card-grid--compact {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px;
+  align-items: start;
 }
 
 .pill {
@@ -499,6 +502,7 @@ textarea {
   cursor: pointer;
   text-align: left;
   padding: 12px;
+  height: 100%;
 }
 
 .item-top h3 {
