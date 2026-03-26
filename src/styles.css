@@ -640,6 +640,17 @@ dd,
   font-size: 1.05rem;
 }
 
+.summary-card--compact {
+  cursor: pointer;
+  text-align: left;
+}
+
+.profile-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 .request-main h3 {
   font-size: 1.05rem;
 }

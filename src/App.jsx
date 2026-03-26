@@ -229,6 +229,7 @@ const seedData = {
       role: "user",
       email: "maya@example.com",
       password: "Maya123!",
+      clientSince: "2024-02-12",
     },
     {
       id: "user-2",
@@ -236,6 +237,7 @@ const seedData = {
       role: "user",
       email: "jordan@example.com",
       password: "Jordan123!",
+      clientSince: "2023-09-08",
     },
     {
       id: "admin-1",
@@ -243,6 +245,7 @@ const seedData = {
       role: "admin",
       email: "riley@example.com",
       password: "Admin123!",
+      clientSince: "2023-01-15",
     },
   ],
   items: [
@@ -559,6 +562,7 @@ function App() {
   const [formStep, setFormStep] = useState("upload");
   const [selectedItemId, setSelectedItemId] = useState("");
   const [selectedItemSource, setSelectedItemSource] = useState("inventory");
+  const [selectedProfileId, setSelectedProfileId] = useState("");
 
   const deferredSearch = useDeferredValue(searchTerm);
   const session = data.accounts.find((account) => account.id === sessionId) ?? null;
@@ -622,6 +626,7 @@ function App() {
     setFormStep("upload");
     setSelectedItemId("");
     setSelectedItemSource("inventory");
+    setSelectedProfileId("");
     startTransition(() => {
       setSearchTerm("");
       setSelectedTab("See all");
@@ -926,6 +931,7 @@ function App() {
   }
 
   function openItemDetail(itemId, source = "inventory") {
+    setSelectedProfileId("");
     setSelectedItemId(itemId);
     setSelectedItemSource(source);
   }
@@ -933,6 +939,16 @@ function App() {
   function closeItemDetail() {
     setSelectedItemId("");
     setSelectedItemSource("inventory");
+  }
+
+  function openProfileDetail(profileId) {
+    setSelectedItemId("");
+    setSelectedItemSource("inventory");
+    setSelectedProfileId(profileId);
+  }
+
+  function closeProfileDetail() {
+    setSelectedProfileId("");
   }
 
   const selectedItem =
@@ -945,6 +961,14 @@ function App() {
   const nextItemId =
     selectedItemIndex >= 0 && selectedItemIndex < detailItems.length - 1
       ? detailItems[selectedItemIndex + 1]?.id ?? ""
+      : "";
+  const selectedProfile = userAccounts.find((account) => account.id === selectedProfileId) ?? null;
+  const selectedProfileIndex = userAccounts.findIndex((account) => account.id === selectedProfileId);
+  const previousProfileId =
+    selectedProfileIndex > 0 ? userAccounts[selectedProfileIndex - 1]?.id ?? "" : "";
+  const nextProfileId =
+    selectedProfileIndex >= 0 && selectedProfileIndex < userAccounts.length - 1
+      ? userAccounts[selectedProfileIndex + 1]?.id ?? ""
       : "";
 
   if (!session) {
@@ -1255,11 +1279,15 @@ function App() {
 
             <div className="admin-summary-grid">
               {userAccounts.map((account) => (
-                <article className="summary-card" key={account.id}>
+                <button
+                  className="summary-card summary-card--compact"
+                  key={account.id}
+                  type="button"
+                  onClick={() => openProfileDetail(account.id)}
+                >
                   <p>{account.name}</p>
                   <strong>{data.items.filter((item) => item.ownerId === account.id).length} items</strong>
-                  <span>{account.email}</span>
-                </article>
+                </button>
               ))}
             </div>
           </section>
@@ -1413,6 +1441,67 @@ function App() {
               onStorageRequest={handleStorageRequest}
               onAdminStatusCompletion={handleAdminStatusCompletion}
             />
+          </div>
+        </div>
+      ) : null}
+
+      {selectedProfile ? (
+        <div className="detail-overlay" role="dialog" aria-modal="true">
+          <div className="detail-backdrop" onClick={closeProfileDetail} />
+          <div className="detail-sheet">
+            <div className="detail-sheet__header">
+              <div className="detail-sheet__nav">
+                <button
+                  className="button ghost detail-sheet__icon-button"
+                  type="button"
+                  onClick={() => previousProfileId && setSelectedProfileId(previousProfileId)}
+                  disabled={!previousProfileId}
+                  aria-label="Previous profile"
+                >
+                  ←
+                </button>
+                <button
+                  className="button ghost detail-sheet__icon-button"
+                  type="button"
+                  onClick={() => nextProfileId && setSelectedProfileId(nextProfileId)}
+                  disabled={!nextProfileId}
+                  aria-label="Next profile"
+                >
+                  →
+                </button>
+              </div>
+              <button
+                className="button ghost detail-sheet__icon-button"
+                type="button"
+                onClick={closeProfileDetail}
+                aria-label="Close profile details"
+              >
+                ×
+              </button>
+            </div>
+
+            <article className="profile-detail">
+              <p className="section-label">User Profile</p>
+              <h2>{selectedProfile.name}</h2>
+              <dl className="meta-grid">
+                <div>
+                  <dt>Email</dt>
+                  <dd>{selectedProfile.email}</dd>
+                </div>
+                <div>
+                  <dt>Items</dt>
+                  <dd>{data.items.filter((item) => item.ownerId === selectedProfile.id).length}</dd>
+                </div>
+                <div>
+                  <dt>Client Since</dt>
+                  <dd>{formatDate(selectedProfile.clientSince)}</dd>
+                </div>
+                <div>
+                  <dt>Client Length</dt>
+                  <dd>{formatClientLength(selectedProfile.clientSince)}</dd>
+                </div>
+              </dl>
+            </article>
           </div>
         </div>
       ) : null}
@@ -1919,6 +2008,10 @@ function loadState() {
       accounts: (parsed.accounts ?? seedData.accounts).map((account) => ({
         ...account,
         password: account.password ?? seedData.accounts.find((seed) => seed.id === account.id)?.password ?? "Temp123!",
+        clientSince:
+          account.clientSince ??
+          seedData.accounts.find((seed) => seed.id === account.id)?.clientSince ??
+          "2024-01-01",
       })),
       items: [...savedItems, ...missingSeedItems],
     };
@@ -1957,6 +2050,28 @@ function formatRequestDate(value) {
     day: "numeric",
     year: "numeric",
   }).format(new Date(`${value}T12:00:00`));
+}
+
+function formatClientLength(value) {
+  const start = new Date(`${value}T12:00:00`);
+  const now = new Date();
+  let years = now.getFullYear() - start.getFullYear();
+  let months = now.getMonth() - start.getMonth();
+
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+
+  if (years <= 0) {
+    return `${months || 1} month${months === 1 ? "" : "s"}`;
+  }
+
+  if (months === 0) {
+    return `${years} year${years === 1 ? "" : "s"}`;
+  }
+
+  return `${years} year${years === 1 ? "" : "s"}, ${months} month${months === 1 ? "" : "s"}`;
 }
 
 function statusClass(status) {
