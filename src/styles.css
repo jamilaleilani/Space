@@ -221,6 +221,7 @@ textarea {
   flex-wrap: wrap;
   gap: 10px;
   align-items: start;
+  justify-content: space-between;
 }
 
 .pill-row > *,
@@ -244,6 +245,7 @@ textarea {
 
 .card-grid.card-grid--compact > * {
   flex: 0 0 calc(50% - 5px);
+  max-width: calc(50% - 5px);
 }
 
 .pill {
