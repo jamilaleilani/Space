@@ -568,6 +568,11 @@ function App() {
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupError, setSignupError] = useState("");
+  const [showProfileForm, setShowProfileForm] = useState(false);
+  const [profileName, setProfileName] = useState("");
+  const [profileEmail, setProfileEmail] = useState("");
+  const [profilePassword, setProfilePassword] = useState("");
+  const [profileError, setProfileError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTab, setSelectedTab] = useState("See all");
   const [selectedAdminOwner, setSelectedAdminOwner] = useState("all");
@@ -648,6 +653,7 @@ function App() {
   }
 
   function handleLogin(nextSessionId) {
+    const nextSession = data.accounts.find((account) => account.id === nextSessionId) ?? null;
     setSessionId(nextSessionId);
     setLoginEmail("");
     setLoginPassword("");
@@ -656,6 +662,11 @@ function App() {
     setSignupEmail("");
     setSignupPassword("");
     setSignupError("");
+    setShowProfileForm(false);
+    setProfileName(nextSession?.name ?? "");
+    setProfileEmail(nextSession?.email ?? "");
+    setProfilePassword(nextSession?.password ?? "");
+    setProfileError("");
     resetWorkspace();
   }
 
@@ -664,6 +675,11 @@ function App() {
     setLoginPassword("");
     setLoginError("");
     setSignupError("");
+    setShowProfileForm(false);
+    setProfileName("");
+    setProfileEmail("");
+    setProfilePassword("");
+    setProfileError("");
     resetWorkspace();
   }
 
@@ -716,6 +732,49 @@ function App() {
     });
 
     handleLogin(nextUser.id);
+  }
+
+  function handleProfileSubmit(event) {
+    event.preventDefault();
+
+    if (!session) {
+      return;
+    }
+
+    const name = profileName.trim();
+    const email = profileEmail.trim().toLowerCase();
+    const password = profilePassword;
+
+    if (!name || !email || !password) {
+      setProfileError("Please fill in your name, email, and password.");
+      return;
+    }
+
+    const emailInUse = data.accounts.some(
+      (account) => account.id !== session.id && account.email.toLowerCase() === email,
+    );
+
+    if (emailInUse) {
+      setProfileError("Another account is already using that email.");
+      return;
+    }
+
+    commit({
+      ...data,
+      accounts: data.accounts.map((account) =>
+        account.id === session.id
+          ? {
+              ...account,
+              name,
+              email,
+              password,
+            }
+          : account,
+      ),
+    });
+
+    setProfileError("");
+    setShowProfileForm(false);
   }
 
   function handleSearchChange(event) {
@@ -1177,11 +1236,60 @@ function App() {
                 {session.role === "admin" ? "Administrator view" : "User view"}
               </p>
             </div>
-            <button className="button ghost" type="button" onClick={handleLogout}>
-              Log out
-            </button>
+            <div className="session-card__actions">
+              <button
+                className="button secondary"
+                type="button"
+                onClick={() => {
+                  setProfileName(session.name);
+                  setProfileEmail(session.email);
+                  setProfilePassword(session.password);
+                  setProfileError("");
+                  setShowProfileForm((current) => !current);
+                }}
+              >
+                {showProfileForm ? "Close profile" : "Edit profile"}
+              </button>
+              <button className="button ghost" type="button" onClick={handleLogout}>
+                Log out
+              </button>
+            </div>
           </div>
 
+          {showProfileForm ? (
+            <form className="form-grid compact-form session-profile-form" onSubmit={handleProfileSubmit}>
+              <label className="field">
+                <span>Name</span>
+                <input
+                  type="text"
+                  value={profileName}
+                  onChange={(event) => setProfileName(event.target.value)}
+                />
+              </label>
+              <label className="field">
+                <span>Email</span>
+                <input
+                  type="email"
+                  value={profileEmail}
+                  onChange={(event) => setProfileEmail(event.target.value)}
+                />
+              </label>
+              <label className="field">
+                <span>Password</span>
+                <input
+                  type="password"
+                  value={profilePassword}
+                  onChange={(event) => setProfilePassword(event.target.value)}
+                />
+              </label>
+              {profileError ? <p className="login-error">{profileError}</p> : null}
+              <div className="button-row">
+                <button className="button primary" type="submit">
+                  Save profile
+                </button>
+              </div>
+            </form>
+          ) : null}
         </div>
       </section>
 

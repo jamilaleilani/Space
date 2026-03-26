@@ -204,6 +204,14 @@ textarea {
   align-items: start;
 }
 
+.session-card__actions,
+.session-profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
 .pill-row,
 .form-grid,
 .meta-grid,
