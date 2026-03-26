@@ -2065,24 +2065,31 @@ function loadState() {
 
   try {
     const parsed = applyArchiveRules(JSON.parse(saved));
-    const savedItems = (parsed.items ?? []).map((item) => ({
-      ...item,
-      image: item.image || SAMPLE_ITEM_IMAGES[item.id] || "",
-      notifications: Array.isArray(item.notifications) ? item.notifications : [],
-      returnRequestDate: normalizeRequestDate(item.returnRequestDate),
-      returnRequestWindow: item.returnRequestWindow ?? "",
-      returnRequestType: item.returnRequestType ?? "",
-      completedAt: normalizeTimestamp(item.completedAt ?? item.returnedCompletedAt),
-      storageRequestDate: normalizeRequestDate(item.storageRequestDate),
-      storageRequestWindow: item.storageRequestWindow ?? "",
-      status: normalizeStatus(item.status),
-      updatedAt: normalizeTimestamp(item.updatedAt) || new Date().toISOString(),
-    }));
+    let clearedExistingLogs = false;
+    const savedItems = (parsed.items ?? []).map((item) => {
+      if (Array.isArray(item.notifications) && item.notifications.length) {
+        clearedExistingLogs = true;
+      }
+
+      return {
+        ...item,
+        image: item.image || SAMPLE_ITEM_IMAGES[item.id] || "",
+        notifications: [],
+        returnRequestDate: normalizeRequestDate(item.returnRequestDate),
+        returnRequestWindow: item.returnRequestWindow ?? "",
+        returnRequestType: item.returnRequestType ?? "",
+        completedAt: normalizeTimestamp(item.completedAt ?? item.returnedCompletedAt),
+        storageRequestDate: normalizeRequestDate(item.storageRequestDate),
+        storageRequestWindow: item.storageRequestWindow ?? "",
+        status: normalizeStatus(item.status),
+        updatedAt: normalizeTimestamp(item.updatedAt) || new Date().toISOString(),
+      };
+    });
     const missingSeedItems = seedData.items.filter(
       (seedItem) => !savedItems.some((item) => item.id === seedItem.id),
     );
 
-    return {
+    const nextState = {
       ...parsed,
       accounts: (parsed.accounts ?? seedData.accounts).map((account) => ({
         ...account,
@@ -2094,6 +2101,12 @@ function loadState() {
       })),
       items: [...savedItems, ...missingSeedItems],
     };
+
+    if (clearedExistingLogs) {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
+    }
+
+    return nextState;
   } catch {
     return seedData;
   }
