@@ -591,7 +591,8 @@ function App() {
       (item) =>
         item.status === "To Sell" ||
         item.status === "To Dispose" ||
-        (item.status === "In Storage" && item.returnRequestType && item.returnRequestDate),
+        (item.status === "In Storage" &&
+          (item.returnRequestType || item.returnRequestDate || item.returnRequestWindow)),
     )
     .filter((item) => {
       const haystack = `${item.name} ${item.category} ${item.description} ${item.location}`.toLowerCase();
