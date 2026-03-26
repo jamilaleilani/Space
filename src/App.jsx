@@ -126,6 +126,7 @@ function App() {
   const [editingId, setEditingId] = useState("");
   const [formStep, setFormStep] = useState("upload");
   const [selectedItemId, setSelectedItemId] = useState("");
+  const [selectedItemSource, setSelectedItemSource] = useState("inventory");
 
   const deferredSearch = useDeferredValue(searchTerm);
   const session = data.accounts.find((account) => account.id === sessionId) ?? null;
@@ -188,6 +189,7 @@ function App() {
     setEditingId("");
     setFormStep("upload");
     setSelectedItemId("");
+    setSelectedItemSource("inventory");
     startTransition(() => {
       setSearchTerm("");
       setSelectedTab("See all");
@@ -335,6 +337,7 @@ function App() {
 
     if (selectedItemId === itemId) {
       setSelectedItemId("");
+      setSelectedItemSource("inventory");
     }
 
     if (editingId === itemId) {
@@ -490,10 +493,27 @@ function App() {
     event.currentTarget.reset();
   }
 
+  function openItemDetail(itemId, source = "inventory") {
+    setSelectedItemId(itemId);
+    setSelectedItemSource(source);
+  }
+
+  function closeItemDetail() {
+    setSelectedItemId("");
+    setSelectedItemSource("inventory");
+  }
+
   const selectedItem =
     sourceItems.find((item) => item.id === selectedItemId) ??
     data.items.find((item) => item.id === selectedItemId) ??
     null;
+  const detailItems = selectedItemSource === "inbox" ? adminInboxItems : filteredItems;
+  const selectedItemIndex = detailItems.findIndex((item) => item.id === selectedItemId);
+  const previousItemId = selectedItemIndex > 0 ? detailItems[selectedItemIndex - 1]?.id ?? "" : "";
+  const nextItemId =
+    selectedItemIndex >= 0 && selectedItemIndex < detailItems.length - 1
+      ? detailItems[selectedItemIndex + 1]?.id ?? ""
+      : "";
 
   if (!session) {
     return (
@@ -756,7 +776,7 @@ function App() {
                   item={item}
                   ownerName={session.name}
                   compact
-                  onOpenDetail={() => setSelectedItemId(item.id)}
+                  onOpenDetail={() => openItemDetail(item.id, "inventory")}
                 />
               ))}
               {!filteredItems.length ? (
@@ -783,7 +803,7 @@ function App() {
                   item={item}
                   ownerName={item.ownerName}
                   compact
-                  onOpenDetail={() => setSelectedItemId(item.id)}
+                  onOpenDetail={() => openItemDetail(item.id, "inbox")}
                 />
               ))}
               {!adminInboxItems.length ? (
@@ -899,7 +919,7 @@ function App() {
                   item={item}
                   ownerName={data.accounts.find((account) => account.id === item.ownerId)?.name ?? "Unknown user"}
                   compact
-                  onOpenDetail={() => setSelectedItemId(item.id)}
+                  onOpenDetail={() => openItemDetail(item.id, "inventory")}
                 />
               ))}
               {!filteredItems.length ? <EmptyState copy="No items match the current filters." /> : null}
@@ -910,14 +930,36 @@ function App() {
 
       {selectedItem ? (
         <div className="detail-overlay" role="dialog" aria-modal="true">
-          <div className="detail-backdrop" onClick={() => setSelectedItemId("")} />
+          <div className="detail-backdrop" onClick={closeItemDetail} />
           <div className="detail-sheet">
             <div className="detail-sheet__header">
-              <button className="button ghost" type="button" onClick={() => setSelectedItemId("")}>
-                Back
-              </button>
-              <button className="button ghost" type="button" onClick={() => setSelectedItemId("")}>
-                Close
+              <div className="detail-sheet__nav">
+                <button
+                  className="button ghost detail-sheet__icon-button"
+                  type="button"
+                  onClick={() => previousItemId && setSelectedItemId(previousItemId)}
+                  disabled={!previousItemId}
+                  aria-label="Previous item"
+                >
+                  ←
+                </button>
+                <button
+                  className="button ghost detail-sheet__icon-button"
+                  type="button"
+                  onClick={() => nextItemId && setSelectedItemId(nextItemId)}
+                  disabled={!nextItemId}
+                  aria-label="Next item"
+                >
+                  →
+                </button>
+              </div>
+              <button
+                className="button ghost detail-sheet__icon-button"
+                type="button"
+                onClick={closeItemDetail}
+                aria-label="Close item details"
+              >
+                ×
               </button>
             </div>
 

@@ -619,7 +619,7 @@ dd,
 
 .detail-sheet__header {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr auto;
   gap: 10px;
   margin-bottom: 10px;
   position: sticky;
@@ -627,6 +627,24 @@ dd,
   z-index: 2;
   padding-bottom: 8px;
   background: rgba(10, 10, 10, 0.98);
+}
+
+.detail-sheet__nav {
+  display: flex;
+  gap: 10px;
+}
+
+.detail-sheet__icon-button {
+  width: 48px;
+  min-width: 48px;
+  padding: 0;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.detail-sheet__icon-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .brand-mark {
