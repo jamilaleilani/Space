@@ -4,11 +4,12 @@ const STORAGE_KEY = "inventory-keeper-react-v1";
 const ACTION_CHOICES = ["Store", "Sell", "Dispose"];
 const STATUS_TABS = ["In Storage", "Returned", "To Sell", "To Dispose", "Sold", "Disposed", "Archive"];
 const EXTRA_STATUS_TABS = ["To Be Returned"];
-const USER_STATUS_TABS = ["See all", ...EXTRA_STATUS_TABS, ...STATUS_TABS];
-const ADMIN_STATUS_TABS = ["See all", ...EXTRA_STATUS_TABS, ...STATUS_TABS];
+const USER_STATUS_TABS = ["See all", "In Storage", "To Be Returned", "To Sell", "To Dispose", "Archive", "Returned", "Sold", "Disposed"];
+const ADMIN_STATUS_TABS = ["See all", "In Storage", "To Be Returned", "To Sell", "To Dispose", "Archive", "Returned", "Sold", "Disposed"];
 const RETURN_WINDOWS = ["Morning (8am-12pm)", "Afternoon (12pm-4pm)", "Evening (4pm-8pm)"];
 const RETURN_OPTIONS = ["Cancel item storage", "Bring back to storage at a later date"];
 const AUTO_ARCHIVE_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
+const ACTION_LOG_RESET_VERSION = 1;
 const SAMPLE_ITEM_IMAGES = {
   "item-1": makeIllustration({
     title: "Winter Coat",
@@ -241,6 +242,14 @@ const seedData = {
       clientSince: "2023-09-08",
     },
     {
+      id: "user-3",
+      name: "Balab David",
+      role: "user",
+      email: "balabdavid@gmail.com",
+      password: "Temp123!",
+      clientSince: "2026-03-26",
+    },
+    {
       id: "admin-1",
       name: "Riley Chen",
       role: "admin",
@@ -274,8 +283,8 @@ const seedData = {
       name: "Dining Table",
       category: "Furniture",
       description: "Oak table marked for sale and ready for admin review.",
-      status: "To Sell",
-      location: "Garage staging area",
+      status: "Returned",
+      location: "",
       storageRequestDate: "",
       storageRequestWindow: "",
       returnRequestDate: "",
@@ -800,6 +809,14 @@ function App() {
           nextItem.storageRequestWindow = "";
         }
 
+        if (field === "status" && value === "In Storage") {
+          nextItem.returnRequestDate = "";
+          nextItem.returnRequestWindow = "";
+          nextItem.returnRequestType = "";
+          nextItem.storageRequestDate = "";
+          nextItem.storageRequestWindow = "";
+        }
+
         if (field === "status" && value !== "Returned") {
           nextItem.completedAt = "";
 
@@ -842,8 +859,8 @@ function App() {
               storageRequestWindow: storageRequestWindow ?? "",
               notifications: [
                 ...(item.notifications ?? []),
-                `${returnMessage} ${typeLabel}.`.trim(),
-                ...(storageMessage ? [storageMessage] : []),
+                createLogEntry(`${returnMessage} ${typeLabel}.`.trim()),
+                ...(storageMessage ? [createLogEntry(storageMessage)] : []),
               ],
               updatedAt: new Date().toISOString(),
             }
@@ -859,16 +876,13 @@ function App() {
         item.id === itemId
           ? {
               ...item,
-              status: "In Storage",
               storageRequestDate,
               storageRequestWindow,
-              returnRequestDate: "",
-              returnRequestWindow: "",
-              returnRequestType: "",
-              completedAt: "",
               notifications: [
                 ...(item.notifications ?? []),
-                `Storage requested for ${formatRequestDate(storageRequestDate)} during ${storageRequestWindow}.`,
+                createLogEntry(
+                  `Bring back to storage requested for ${formatRequestDate(storageRequestDate)} during ${storageRequestWindow}.`,
+                ),
               ],
               updatedAt: new Date().toISOString(),
             }
@@ -896,22 +910,30 @@ function App() {
       ...data,
       items: data.items.map((item) =>
         item.id === itemId
-          ? {
-              ...item,
-              status: nextStatus,
-              returnRequestDate: nextStatus === "Returned" ? "" : item.returnRequestDate,
-              returnRequestWindow: nextStatus === "Returned" ? "" : item.returnRequestWindow,
-              returnRequestType: nextStatus === "Returned" ? item.returnRequestType : "",
-              completedAt:
-                nextStatus === "Returned" || nextStatus === "Sold" || nextStatus === "Disposed"
-                  ? new Date().toISOString()
-                  : item.completedAt,
-              notifications: [
-                ...(item.notifications ?? []),
-                messageByStatus[nextStatus],
-              ],
-              updatedAt: new Date().toISOString(),
-            }
+          ? (() => {
+              const shouldClearStorageLocation = ["Returned", "Sold", "Disposed"].includes(nextStatus);
+
+              return {
+                ...item,
+                status: nextStatus,
+                location: shouldClearStorageLocation ? "" : item.location,
+                returnRequestDate: nextStatus === "Returned" ? "" : item.returnRequestDate,
+                returnRequestWindow: nextStatus === "Returned" ? "" : item.returnRequestWindow,
+                returnRequestType: nextStatus === "Returned" ? item.returnRequestType : "",
+                completedAt:
+                  nextStatus === "Returned" || nextStatus === "Sold" || nextStatus === "Disposed"
+                    ? new Date().toISOString()
+                    : item.completedAt,
+                notifications: [
+                  ...(item.notifications ?? []),
+                  createLogEntry(messageByStatus[nextStatus]),
+                  ...(shouldClearStorageLocation && item.location
+                    ? [createLogEntry(`Storage location removed from item: ${item.location}.`)]
+                    : []),
+                ],
+                updatedAt: new Date().toISOString(),
+              };
+            })()
           : item,
       ),
     });
@@ -1538,7 +1560,9 @@ function ItemCard({
   onAdminStatusCompletion,
 }) {
   const currentActionChoice = mapStatusToActionChoice(item.status);
-  const canUserManageActions = canManage && item.status !== "Archive";
+  const canUserManageActions = canManage && !["Archive", "Sold", "Disposed"].includes(item.status);
+  const canShowStorageLocation = !["Returned", "Sold", "Disposed", "Archive"].includes(item.status);
+  const returnRecipientLabel = canAdminManage ? ownerName : "you";
   const availableStatusActions =
     item.status === "Returned"
       ? ACTION_CHOICES
@@ -1688,10 +1712,12 @@ function ItemCard({
           <dt>Category</dt>
           <dd>{item.category}</dd>
         </div>
-        <div>
-          <dt>Location</dt>
-          <dd>{item.location}</dd>
-        </div>
+        {canShowStorageLocation ? (
+          <div>
+            <dt>Location</dt>
+            <dd>{item.location}</dd>
+          </div>
+        ) : null}
         <div>
           <dt>Updated</dt>
           <dd>{formatDate(item.updatedAt)}</dd>
@@ -1749,7 +1775,12 @@ function ItemCard({
                 .slice()
                 .reverse()
                 .map((entry, index) => (
-                  <p key={`${item.id}-log-${index}`}>{entry}</p>
+                  <div className="activity-log__entry" key={`${item.id}-log-${index}`}>
+                    <p>{typeof entry === "string" ? entry : entry.message}</p>
+                    {typeof entry === "string" || !entry.at ? null : (
+                      <span className="activity-log__time">{formatDateTime(entry.at)}</span>
+                    )}
+                  </div>
                 ))}
             </div>
           ) : null}
@@ -1808,7 +1839,7 @@ function ItemCard({
               />
               <div className="modal-card return-form">
                 <label className="field">
-                  <span>What would you like to do after this item is returned to you?</span>
+                  <span>{`What would you like to do after this item is returned to ${returnRecipientLabel}?`}</span>
                   <select
                     value={returnMode}
                     onChange={(event) => setReturnMode(event.target.value)}
@@ -1825,7 +1856,7 @@ function ItemCard({
                 {returnMode === "Bring back to storage at a later date" ? (
                   <>
                     <label className="field">
-                      <span>When would you like this item returned to you?</span>
+                      <span>{`When would you like this item returned to ${returnRecipientLabel}?`}</span>
                       <input
                         type="date"
                         value={returnDate}
@@ -1872,7 +1903,7 @@ function ItemCard({
                 ) : returnMode === "Cancel item storage" ? (
                   <>
                     <label className="field">
-                      <span>When would you like this item returned to you?</span>
+                      <span>{`When would you like this item returned to ${returnRecipientLabel}?`}</span>
                       <input
                         type="date"
                         value={returnDate}
@@ -1920,20 +1951,22 @@ function ItemCard({
 
       {canAdminManage && item.status !== "Archive" ? (
         <>
-          <div className="form-grid compact-form">
-            <label className="field">
-              <span>Storage location</span>
-              <input
-                defaultValue={item.location}
-                onBlur={(event) => {
-                  const value = event.target.value.trim() || "Unknown location";
-                  if (value !== item.location) {
-                    onQuickUpdate(item.id, "location", value);
-                  }
-                }}
-              />
-            </label>
-          </div>
+          {canShowStorageLocation ? (
+            <div className="form-grid compact-form">
+              <label className="field">
+                <span>Storage location</span>
+                <input
+                  defaultValue={item.location}
+                  onBlur={(event) => {
+                    const value = event.target.value.trim() || "Unknown location";
+                    if (value !== item.location) {
+                      onQuickUpdate(item.id, "location", value);
+                    }
+                  }}
+                />
+              </label>
+            </div>
+          ) : null}
 
           {adminStatusButtons.length ? (
             <div className="field">
@@ -1953,6 +1986,18 @@ function ItemCard({
           ) : null}
 
           <div className="button-row">
+            {item.status === "In Storage" && !item.returnRequestType ? (
+              <button
+                className="button secondary"
+                type="button"
+                onClick={() => {
+                  setShowReturnForm((current) => !current);
+                  setReturnMode("");
+                }}
+              >
+                Return to user
+              </button>
+            ) : null}
             <button className="button secondary" type="button" onClick={() => onEdit(item)}>
               Edit
             </button>
@@ -2065,33 +2110,38 @@ function loadState() {
 
   try {
     const parsed = applyArchiveRules(JSON.parse(saved));
-    let clearedExistingLogs = false;
+    const shouldClearExistingLogs = (parsed.actionLogResetVersion ?? 0) < ACTION_LOG_RESET_VERSION;
     const savedItems = (parsed.items ?? []).map((item) => {
-      if (Array.isArray(item.notifications) && item.notifications.length) {
-        clearedExistingLogs = true;
-      }
+      const isDiningTable = item.id === "item-2";
 
       return {
         ...item,
         image: item.image || SAMPLE_ITEM_IMAGES[item.id] || "",
-        notifications: [],
+        notifications: shouldClearExistingLogs ? [] : normalizeNotifications(item.notifications),
         returnRequestDate: normalizeRequestDate(item.returnRequestDate),
         returnRequestWindow: item.returnRequestWindow ?? "",
         returnRequestType: item.returnRequestType ?? "",
         completedAt: normalizeTimestamp(item.completedAt ?? item.returnedCompletedAt),
         storageRequestDate: normalizeRequestDate(item.storageRequestDate),
         storageRequestWindow: item.storageRequestWindow ?? "",
-        status: normalizeStatus(item.status),
+        status: isDiningTable ? "Returned" : normalizeStatus(item.status),
+        location: isDiningTable ? "" : item.location,
         updatedAt: normalizeTimestamp(item.updatedAt) || new Date().toISOString(),
       };
     });
     const missingSeedItems = seedData.items.filter(
       (seedItem) => !savedItems.some((item) => item.id === seedItem.id),
     );
+    const mergedAccounts = [...(parsed.accounts ?? [])];
+    seedData.accounts.forEach((seedAccount) => {
+      if (!mergedAccounts.some((account) => account.id === seedAccount.id)) {
+        mergedAccounts.push(seedAccount);
+      }
+    });
 
     const nextState = {
       ...parsed,
-      accounts: (parsed.accounts ?? seedData.accounts).map((account) => ({
+      accounts: mergedAccounts.map((account) => ({
         ...account,
         password: account.password ?? seedData.accounts.find((seed) => seed.id === account.id)?.password ?? "Temp123!",
         clientSince:
@@ -2099,10 +2149,11 @@ function loadState() {
           seedData.accounts.find((seed) => seed.id === account.id)?.clientSince ??
           "2024-01-01",
       })),
+      actionLogResetVersion: ACTION_LOG_RESET_VERSION,
       items: [...savedItems, ...missingSeedItems],
     };
 
-    if (clearedExistingLogs) {
+    if (shouldClearExistingLogs) {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
     }
 
@@ -2181,6 +2232,21 @@ function formatClientLength(value) {
   return `${years} year${years === 1 ? "" : "s"}, ${months} month${months === 1 ? "" : "s"}`;
 }
 
+function formatDateTime(value) {
+  const normalizedValue = normalizeTimestamp(value);
+  if (!normalizedValue) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(normalizedValue));
+}
+
 function normalizeTimestamp(value) {
   if (!value || typeof value !== "string") {
     return "";
@@ -2195,6 +2261,36 @@ function normalizeRequestDate(value) {
   }
 
   return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : "";
+}
+
+function normalizeNotifications(notifications) {
+  if (!Array.isArray(notifications)) {
+    return [];
+  }
+
+  return notifications
+    .map((entry) => {
+      if (typeof entry === "string") {
+        return { message: entry, at: "" };
+      }
+
+      if (!entry || typeof entry !== "object") {
+        return null;
+      }
+
+      return {
+        message: typeof entry.message === "string" ? entry.message : "",
+        at: normalizeTimestamp(entry.at),
+      };
+    })
+    .filter((entry) => entry?.message);
+}
+
+function createLogEntry(message, at = new Date().toISOString()) {
+  return {
+    message,
+    at,
+  };
 }
 
 function statusClass(status) {
@@ -2277,9 +2373,11 @@ function applyArchiveRules(data) {
         status: "Archive",
         notifications: [
           ...(item.notifications ?? []),
-          item.status === "Returned"
-            ? "Item moved to archive after one week in returned status."
-            : `Item moved to archive after one week in ${item.status.toLowerCase()} status.`,
+          createLogEntry(
+            item.status === "Returned"
+              ? "Item moved to archive after one week in returned status."
+              : `Item moved to archive after one week in ${item.status.toLowerCase()} status.`,
+          ),
         ],
         updatedAt: new Date().toISOString(),
       };

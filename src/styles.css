@@ -505,6 +505,17 @@ textarea {
   border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
+.activity-log__entry {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.activity-log__time {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
 .image-preview,
 .item-image-wrap,
 .item-image-placeholder {
