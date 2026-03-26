@@ -148,7 +148,6 @@ function App() {
     return matchesStatus && matchesSearch;
   });
 
-  const counts = buildCounts(sourceItems);
   const tabCounts = buildTabCounts(ownerFilteredItems, true);
   const adminInboxItems = ownerFilteredItems
     .filter(
@@ -581,12 +580,6 @@ function App() {
             </button>
           </div>
 
-          <div className="pill-row">
-            <span className="pill">{counts.total} total items</span>
-            <span className="pill">{counts.inStorage} in storage</span>
-            <span className="pill">{counts.toSell} to sell</span>
-            <span className="pill">{counts.toDispose} to dispose</span>
-          </div>
         </div>
       </section>
 
