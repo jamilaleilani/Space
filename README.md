@@ -7,10 +7,15 @@ A local React app for tracking physical items by person and role.
 - Sample sign-in flow for `User` and `Admin` accounts
 - User dashboard with add, edit, delete, and status/location updates
 - Item image upload when creating or editing an item
-- Request-style item statuses: `In Storage`, `To Sell`, and `To Give Away`
-- Admin inbox that highlights items users want sold or given away
+- Two-step item creation flow with image upload first, then manual item details
+- User action choices: `Store`, `Sell`, and `Dispose`
+- Lifecycle tabs for `In Storage`, `Returned`, `To Sell`, `To Dispose`, `Sold`, and `Disposed`
+- Lifecycle tabs for `In Storage`, `Returned`, `To Sell`, `To Dispose`, `Sold`, `Disposed`, and `Archive`
+- Return scheduling for items in storage and storage scheduling for returned items
+- Returned items completed from `Cancel storage`, plus `Sold` and `Disposed` items, move into `Archive` after one week
+- Admin inbox that highlights items needing action
 - Admin dashboard that shows all users, their items, and summary counts
-- Search and status filtering
+- Search and tab-based status filtering
 - Browser persistence with `localStorage`
 
 ## Run it
