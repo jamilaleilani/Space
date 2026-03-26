@@ -1544,21 +1544,15 @@ function ItemCard({
     const buttons = [];
     const isCurrentChoice = currentActionChoice === status;
 
-    if (!(item.status === "To Dispose" && status === "Dispose")) {
+    if (
+      !(item.status === "To Dispose" && status === "Dispose") &&
+      !(item.status === "To Sell" && status === "Sell")
+    ) {
       buttons.push({
         key: `admin-${item.id}-${status}`,
         label: status,
         className: isCurrentChoice ? "button ghost" : "button secondary",
         onClick: () => onUserStatusChoice(item.id, status),
-      });
-    }
-
-    if (status === "Sell" && item.status === "To Sell") {
-      buttons.push({
-        key: `admin-${item.id}-Sold`,
-        label: "Sold",
-        className: "button primary",
-        onClick: () => onAdminStatusCompletion(item.id, "Sold"),
       });
     }
 
