@@ -1228,7 +1228,7 @@ function App() {
               <p className="section-note">{adminInboxItems.length} requests</p>
             </div>
 
-            <div className="request-list">
+            <div className="request-list request-list--compact">
               {adminInboxItems.map((item) => (
                 <ItemCard
                   key={item.id}

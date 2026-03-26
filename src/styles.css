@@ -218,6 +218,16 @@ textarea {
 
 .card-grid.card-grid--compact {
   display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: start;
+  justify-content: space-between;
+}
+
+.request-list.request-list--compact {
+  display: flex;
+  flex-direction: row;
   flex-wrap: wrap;
   gap: 10px;
   align-items: start;
@@ -244,6 +254,11 @@ textarea {
 }
 
 .card-grid.card-grid--compact > * {
+  flex: 0 0 calc(50% - 5px);
+  max-width: calc(50% - 5px);
+}
+
+.request-list.request-list--compact > * {
   flex: 0 0 calc(50% - 5px);
   max-width: calc(50% - 5px);
 }
