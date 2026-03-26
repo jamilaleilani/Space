@@ -251,9 +251,9 @@ const seedData = {
     },
     {
       id: "admin-1",
-      name: "Riley Chen",
+      name: "James Breedlove",
       role: "admin",
-      email: "riley@example.com",
+      email: "Breedlovejames@yahoo.com",
       password: "Admin123!",
       clientSince: "2023-01-15",
     },
@@ -2348,7 +2348,13 @@ function loadState() {
           name:
             account.id === "user-3"
               ? "David Balaban"
+              : account.id === "admin-1"
+                ? "James Breedlove"
               : account.name ?? seedAccount?.name ?? "Unnamed user",
+          email:
+            account.id === "admin-1"
+              ? "Breedlovejames@yahoo.com"
+              : account.email ?? seedAccount?.email ?? "",
           password: account.password ?? seedAccount?.password ?? "Temp123!",
           clientSince:
             normalizeRequestDate(account.clientSince) ??
