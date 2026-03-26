@@ -6,7 +6,7 @@ const STATUS_TABS = ["In Storage", "Returned", "To Sell", "To Dispose", "Sold", 
 const USER_STATUS_TABS = ["See all", ...STATUS_TABS];
 const ADMIN_STATUS_TABS = ["See all", ...STATUS_TABS];
 const RETURN_WINDOWS = ["Morning (8am-12pm)", "Afternoon (12pm-4pm)", "Evening (4pm-8pm)"];
-const RETURN_OPTIONS = ["Cancel storage", "Return at a later date"];
+const RETURN_OPTIONS = ["Cancel item storage", "Bring back to storage at a later date"];
 const AUTO_ARCHIVE_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
 const SAMPLE_ITEM_IMAGES = {
   "item-1": makeIllustration({
@@ -815,7 +815,7 @@ function App() {
 
   function handleReturnRequest(itemId, returnRequestDate, returnRequestWindow) {
     const returnRequestType =
-      returnRequestWindow === "Cancel storage" ? "cancel-storage" : "return-later";
+      returnRequestWindow === "Cancel item storage" ? "cancel-storage" : "return-later";
 
     commit({
       ...data,
@@ -828,7 +828,7 @@ function App() {
               returnRequestType,
               notifications: [
                 ...(item.notifications ?? []),
-                returnRequestWindow === "Cancel storage"
+                returnRequestWindow === "Cancel item storage"
                   ? "Return requested with cancel storage."
                   : `Return requested for ${formatRequestDate(returnRequestDate)} during ${returnRequestWindow}.`,
               ],
@@ -1562,8 +1562,8 @@ function ItemCard({
     : [];
 
   function submitReturnRequest() {
-    if (returnMode === "Cancel storage") {
-      onReturnRequest(item.id, "", "Cancel storage");
+    if (returnMode === "Cancel item storage") {
+      onReturnRequest(item.id, "", "Cancel item storage");
       setShowReturnForm(false);
       setReturnMode("");
       setReturnDate("");
@@ -1670,8 +1670,8 @@ function ItemCard({
         <div className="return-summary">
           <strong>Return requested</strong>
           <p>
-            {item.returnRequestWindow === "Cancel storage"
-              ? "Cancel storage"
+            {item.returnRequestWindow === "Cancel item storage"
+              ? "Cancel item storage"
               : `${formatRequestDate(item.returnRequestDate)} during ${item.returnRequestWindow}`}
           </p>
         </div>
@@ -1766,7 +1766,7 @@ function ItemCard({
               />
               <div className="modal-card return-form">
                 <label className="field">
-                  <span>What would you like to do?</span>
+                  <span>What would you like to do after this item is returned to you?</span>
                   <select
                     value={returnMode}
                     onChange={(event) => setReturnMode(event.target.value)}
@@ -1780,7 +1780,7 @@ function ItemCard({
                   </select>
                 </label>
 
-                {returnMode === "Return at a later date" ? (
+                {returnMode === "Bring back to storage at a later date" ? (
                   <>
                     <label className="field">
                       <span>Preferred date</span>
@@ -1809,7 +1809,7 @@ function ItemCard({
 
                 <div className="button-row">
                   <button className="button primary" type="button" onClick={submitReturnRequest}>
-                    {returnMode === "Cancel storage" ? "Confirm return request" : "Save return request"}
+                    {returnMode === "Cancel item storage" ? "Confirm return request" : "Save return request"}
                   </button>
                   <button
                     className="button ghost"
@@ -1908,7 +1908,7 @@ function ItemCard({
             </button>
             {item.status === "In Storage" &&
             item.returnRequestWindow &&
-            (item.returnRequestWindow === "Cancel storage" || item.returnRequestDate) ? (
+            (item.returnRequestWindow === "Cancel item storage" || item.returnRequestDate) ? (
               <button
                 className="button primary"
                 type="button"
