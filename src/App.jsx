@@ -567,6 +567,7 @@ function App() {
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
+  const [signupPasswordConfirm, setSignupPasswordConfirm] = useState("");
   const [signupError, setSignupError] = useState("");
   const [showProfileForm, setShowProfileForm] = useState(false);
   const [profileName, setProfileName] = useState("");
@@ -661,6 +662,7 @@ function App() {
     setSignupName("");
     setSignupEmail("");
     setSignupPassword("");
+    setSignupPasswordConfirm("");
     setSignupError("");
     setShowProfileForm(false);
     setProfileName(nextSession?.name ?? "");
@@ -705,9 +707,15 @@ function App() {
     const name = signupName.trim();
     const email = signupEmail.trim().toLowerCase();
     const password = signupPassword;
+    const passwordConfirm = signupPasswordConfirm;
 
-    if (!name || !email || !password) {
-      setSignupError("Please fill in your name, email, and password.");
+    if (!name || !email || !password || !passwordConfirm) {
+      setSignupError("Please fill in your name, email, password, and password confirmation.");
+      return;
+    }
+
+    if (password !== passwordConfirm) {
+      setSignupError("Passwords do not match.");
       return;
     }
 
@@ -1199,6 +1207,16 @@ function App() {
                   value={signupPassword}
                   onChange={(event) => setSignupPassword(event.target.value)}
                   placeholder="Create password"
+                />
+              </label>
+
+              <label className="field">
+                <span>Confirm password</span>
+                <input
+                  type="password"
+                  value={signupPasswordConfirm}
+                  onChange={(event) => setSignupPasswordConfirm(event.target.value)}
+                  placeholder="Re-enter password"
                 />
               </label>
 
