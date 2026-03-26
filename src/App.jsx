@@ -1627,7 +1627,7 @@ function ItemCard({
           <h3>{item.name}</h3>
         </div>
         <div className="status-stack">
-          <span className={`status-tag ${statusClass(item.status)}`}>{item.status}</span>
+          <span className="status-text">{item.status}</span>
           {canAdminManage && item.status === "To Dispose" ? (
             <button
               className="button primary status-stack__action"
