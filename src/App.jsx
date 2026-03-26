@@ -1449,7 +1449,9 @@ function ItemCard({
   const [returnWindow, setReturnWindow] = useState(item.returnRequestWindow ?? "");
   const [storageDate, setStorageDate] = useState(item.storageRequestDate ?? "");
   const [storageWindow, setStorageWindow] = useState(item.storageRequestWindow ?? "");
-  const adminStatusButtons = ACTION_CHOICES.flatMap((status) => {
+  const adminCanChangeStatus = !["Sold", "Disposed", "Archive"].includes(item.status);
+  const adminStatusButtons = adminCanChangeStatus
+    ? ACTION_CHOICES.flatMap((status) => {
     const buttons = [];
     const isCurrentChoice = currentActionChoice === status;
 
@@ -1481,7 +1483,8 @@ function ItemCard({
     }
 
     return buttons;
-  });
+      })
+    : [];
 
   function submitReturnRequest() {
     if (returnMode === "Cancel storage") {
@@ -1801,21 +1804,23 @@ function ItemCard({
             </label>
           </div>
 
-          <div className="field">
-            <span>Change item status</span>
-            <div className="status-action-row">
-              {adminStatusButtons.map((button) => (
-                <button
-                  key={button.key}
-                  className={button.className}
-                  type="button"
-                  onClick={button.onClick}
-                >
-                  {button.label}
-                </button>
-              ))}
+          {adminStatusButtons.length ? (
+            <div className="field">
+              <span>Change item status</span>
+              <div className="status-action-row">
+                {adminStatusButtons.map((button) => (
+                  <button
+                    key={button.key}
+                    className={button.className}
+                    type="button"
+                    onClick={button.onClick}
+                  >
+                    {button.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : null}
 
           <div className="button-row">
             <button className="button secondary" type="button" onClick={() => onEdit(item)}>
