@@ -1541,9 +1541,7 @@ function ItemCard({
   const canUserManageActions = canManage && item.status !== "Archive";
   const availableStatusActions =
     item.status === "Returned"
-      ? ACTION_CHOICES.filter(
-          (status) => !(item.returnRequestType === "return-later" && status === "Store"),
-        )
+      ? ACTION_CHOICES
       : ACTION_CHOICES.filter((status) => status !== currentActionChoice);
   const [showReturnForm, setShowReturnForm] = useState(false);
   const [showStorageForm, setShowStorageForm] = useState(false);
@@ -1568,9 +1566,12 @@ function ItemCard({
     ) {
       buttons.push({
         key: `admin-${item.id}-${status}`,
-        label: status,
+        label: item.status === "Returned" && status === "Store" ? "Bring back to storage" : status,
         className: isCurrentChoice ? "button ghost" : "button secondary",
-        onClick: () => onUserStatusChoice(item.id, status),
+        onClick:
+          item.status === "Returned" && status === "Store"
+            ? () => setShowStorageForm((current) => !current)
+            : () => onUserStatusChoice(item.id, status),
       });
     }
 
@@ -1773,7 +1774,7 @@ function ItemCard({
                     onUserStatusChoice(item.id, status);
                   }}
                 >
-                  {status}
+                  {item.status === "Returned" && status === "Store" ? "Bring back to storage" : status}
                 </button>
               ))}
             </div>
@@ -1789,15 +1790,6 @@ function ItemCard({
                 }}
               >
                 Return to me
-              </button>
-            ) : null}
-            {item.status === "Returned" && item.returnRequestType === "return-later" ? (
-              <button
-                className="button secondary"
-                type="button"
-                onClick={() => setShowStorageForm((current) => !current)}
-              >
-                {item.storageRequestDate ? "Edit bring back to storage date" : "Add bring back to storage date"}
               </button>
             ) : null}
             <button className="button ghost" type="button" onClick={() => onDelete(item.id)}>
@@ -1923,44 +1915,6 @@ function ItemCard({
             </div>
           ) : null}
 
-          {item.status === "Returned" && showStorageForm ? (
-            <div className="return-form">
-              <label className="field">
-                <span>Preferred storage date</span>
-                <input
-                  type="date"
-                  value={storageDate}
-                  onChange={(event) => setStorageDate(event.target.value)}
-                />
-              </label>
-              <label className="field">
-                <span>Time window</span>
-                <select
-                  value={storageWindow}
-                  onChange={(event) => setStorageWindow(event.target.value)}
-                >
-                  <option value="">Select a time window</option>
-                  {RETURN_WINDOWS.map((windowLabel) => (
-                    <option key={windowLabel} value={windowLabel}>
-                      {windowLabel}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div className="button-row">
-                <button className="button primary" type="button" onClick={submitStorageRequest}>
-                  Save storage request
-                </button>
-                <button
-                  className="button ghost"
-                  type="button"
-                  onClick={() => setShowStorageForm(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : null}
         </>
       ) : null}
 
@@ -2004,6 +1958,48 @@ function ItemCard({
             </button>
           </div>
         </>
+      ) : null}
+
+      {item.status === "Returned" && showStorageForm ? (
+        <div className="modal-overlay" role="dialog" aria-modal="true">
+          <div className="modal-backdrop" onClick={() => setShowStorageForm(false)} />
+          <div className="modal-card return-form">
+            <label className="field">
+              <span>When should this item be brought back to storage?</span>
+              <input
+                type="date"
+                value={storageDate}
+                onChange={(event) => setStorageDate(event.target.value)}
+              />
+            </label>
+            <label className="field">
+              <span>What time window works for storage pickup?</span>
+              <select
+                value={storageWindow}
+                onChange={(event) => setStorageWindow(event.target.value)}
+              >
+                <option value="">Select a time window</option>
+                {RETURN_WINDOWS.map((windowLabel) => (
+                  <option key={windowLabel} value={windowLabel}>
+                    {windowLabel}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="button-row">
+              <button className="button primary" type="button" onClick={submitStorageRequest}>
+                Save bring back to storage date
+              </button>
+              <button
+                className="button ghost"
+                type="button"
+                onClick={() => setShowStorageForm(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </article>
   );
