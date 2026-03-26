@@ -578,6 +578,10 @@ textarea {
   letter-spacing: 0.01em;
 }
 
+.status-text--compact {
+  font-size: 0.92rem;
+}
+
 .status-stack__action {
   min-height: 42px;
 }

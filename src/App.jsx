@@ -1605,7 +1605,7 @@ function ItemCard({
             <p className="card-eyebrow">{ownerName}</p>
             <h3>{item.name}</h3>
           </div>
-          <span className={`status-tag ${statusClass(item.status)}`}>{item.status}</span>
+          <span className="status-text status-text--compact">{item.status}</span>
         </div>
       </button>
     );
