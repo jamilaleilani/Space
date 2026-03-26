@@ -1546,7 +1546,8 @@ function ItemCard({
 
     if (
       !(item.status === "To Dispose" && status === "Dispose") &&
-      !(item.status === "To Sell" && status === "Sell")
+      !(item.status === "To Sell" && status === "Sell") &&
+      !(item.status === "In Storage" && status === "Store")
     ) {
       buttons.push({
         key: `admin-${item.id}-${status}`,
