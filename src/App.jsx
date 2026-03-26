@@ -8,6 +8,60 @@ const ADMIN_STATUS_TABS = ["See all", ...STATUS_TABS];
 const RETURN_WINDOWS = ["Morning (8am-12pm)", "Afternoon (12pm-4pm)", "Evening (4pm-8pm)"];
 const RETURN_OPTIONS = ["Cancel storage", "Return at a later date"];
 const AUTO_ARCHIVE_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
+const SAMPLE_ITEM_IMAGES = {
+  "item-1": makeIllustration({
+    title: "Winter Coat",
+    background: "#25334d",
+    accent: "#f3f4f6",
+    detail: "#93c5fd",
+    body: `
+      <path d="M154 92 126 74 98 92 88 150h22l8 92h16l6-82h12l6 82h16l8-92h22z"/>
+      <path d="M126 74v168"/>
+      <path d="M98 92 78 122"/>
+      <path d="M154 92 174 122"/>
+      <path d="M110 98h32"/>
+    `,
+  }),
+  "item-2": makeIllustration({
+    title: "Dining Table",
+    background: "#4a3225",
+    accent: "#f5f5f4",
+    detail: "#d6b38a",
+    body: `
+      <rect x="54" y="88" width="144" height="26" rx="4"/>
+      <path d="M72 114 62 214"/>
+      <path d="M180 114 190 214"/>
+      <path d="M102 114 94 214"/>
+      <path d="M150 114 158 214"/>
+      <path d="M62 214h132"/>
+    `,
+  }),
+  "item-3": makeIllustration({
+    title: "Children's Books",
+    background: "#23403b",
+    accent: "#f8fafc",
+    detail: "#fca5a5",
+    body: `
+      <rect x="62" y="82" width="30" height="118" rx="4"/>
+      <rect x="98" y="74" width="34" height="126" rx="4"/>
+      <rect x="138" y="88" width="30" height="112" rx="4"/>
+      <rect x="174" y="78" width="24" height="122" rx="4"/>
+      <path d="M76 98h10M76 116h10M112 94h12M112 114h12M148 104h10M148 122h10M180 96h8M180 114h8"/>
+    `,
+  }),
+  "item-4": makeIllustration({
+    title: "Ski Boots",
+    background: "#1f2937",
+    accent: "#f9fafb",
+    detail: "#fcd34d",
+    body: `
+      <path d="M62 150h54l18 24h26v24H78l-22-26z"/>
+      <path d="M148 138h48l18 18v42h-72l-20-24z"/>
+      <path d="M92 138v20M108 136v24M168 126v24M184 124v26"/>
+      <path d="M56 198h108M122 198h94"/>
+    `,
+  }),
+};
 
 const seedData = {
   accounts: [
@@ -48,6 +102,7 @@ const seedData = {
       returnRequestWindow: "",
       returnRequestType: "",
       completedAt: "",
+      image: SAMPLE_ITEM_IMAGES["item-1"],
       notifications: [],
       updatedAt: "2026-03-23T13:00:00.000Z",
     },
@@ -65,6 +120,7 @@ const seedData = {
       returnRequestWindow: "",
       returnRequestType: "",
       completedAt: "",
+      image: SAMPLE_ITEM_IMAGES["item-2"],
       notifications: [],
       updatedAt: "2026-03-22T15:30:00.000Z",
     },
@@ -82,6 +138,7 @@ const seedData = {
       returnRequestWindow: "",
       returnRequestType: "",
       completedAt: "",
+      image: SAMPLE_ITEM_IMAGES["item-3"],
       notifications: [],
       updatedAt: "2026-03-21T18:15:00.000Z",
     },
@@ -99,6 +156,7 @@ const seedData = {
       returnRequestWindow: "",
       returnRequestType: "",
       completedAt: "",
+      image: SAMPLE_ITEM_IMAGES["item-4"],
       notifications: [],
       updatedAt: "2026-03-23T09:20:00.000Z",
     },
@@ -1473,7 +1531,7 @@ function loadState() {
       })),
       items: (parsed.items ?? []).map((item) => ({
         ...item,
-        image: item.image ?? "",
+        image: item.image ?? SAMPLE_ITEM_IMAGES[item.id] ?? "",
         notifications: item.notifications ?? [],
         returnRequestDate: item.returnRequestDate ?? "",
         returnRequestWindow: item.returnRequestWindow ?? "",
@@ -1487,6 +1545,22 @@ function loadState() {
   } catch {
     return seedData;
   }
+}
+
+function makeIllustration({ title, background, accent, detail, body }) {
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 252 252" role="img" aria-label="${title}">
+      <rect width="252" height="252" rx="28" fill="${background}"/>
+      <circle cx="196" cy="58" r="34" fill="${detail}" opacity="0.22"/>
+      <circle cx="58" cy="194" r="42" fill="${detail}" opacity="0.16"/>
+      <g fill="none" stroke="${accent}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+        ${body}
+      </g>
+      <rect x="24" y="24" width="204" height="204" rx="24" fill="none" stroke="${accent}" stroke-opacity="0.16"/>
+    </svg>
+  `;
+
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
 function formatDate(value) {
