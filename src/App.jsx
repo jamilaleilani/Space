@@ -573,6 +573,7 @@ function App() {
   const [profileName, setProfileName] = useState("");
   const [profileEmail, setProfileEmail] = useState("");
   const [profilePassword, setProfilePassword] = useState("");
+  const [profilePasswordConfirm, setProfilePasswordConfirm] = useState("");
   const [profileError, setProfileError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTab, setSelectedTab] = useState("See all");
@@ -668,6 +669,7 @@ function App() {
     setProfileName(nextSession?.name ?? "");
     setProfileEmail(nextSession?.email ?? "");
     setProfilePassword(nextSession?.password ?? "");
+    setProfilePasswordConfirm(nextSession?.password ?? "");
     setProfileError("");
     resetWorkspace();
   }
@@ -681,6 +683,7 @@ function App() {
     setProfileName("");
     setProfileEmail("");
     setProfilePassword("");
+    setProfilePasswordConfirm("");
     setProfileError("");
     resetWorkspace();
   }
@@ -752,9 +755,15 @@ function App() {
     const name = profileName.trim();
     const email = profileEmail.trim().toLowerCase();
     const password = profilePassword;
+    const passwordConfirm = profilePasswordConfirm;
 
-    if (!name || !email || !password) {
-      setProfileError("Please fill in your name, email, and password.");
+    if (!name || !email || !password || !passwordConfirm) {
+      setProfileError("Please fill in your name, email, password, and password confirmation.");
+      return;
+    }
+
+    if (password !== passwordConfirm) {
+      setProfileError("Passwords do not match.");
       return;
     }
 
@@ -1262,6 +1271,7 @@ function App() {
                   setProfileName(session.name);
                   setProfileEmail(session.email);
                   setProfilePassword(session.password);
+                  setProfilePasswordConfirm(session.password);
                   setProfileError("");
                   setShowProfileForm((current) => !current);
                 }}
@@ -1298,6 +1308,14 @@ function App() {
                   type="password"
                   value={profilePassword}
                   onChange={(event) => setProfilePassword(event.target.value)}
+                />
+              </label>
+              <label className="field">
+                <span>Confirm password</span>
+                <input
+                  type="password"
+                  value={profilePasswordConfirm}
+                  onChange={(event) => setProfilePasswordConfirm(event.target.value)}
                 />
               </label>
               {profileError ? <p className="login-error">{profileError}</p> : null}
