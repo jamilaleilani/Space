@@ -1756,63 +1756,72 @@ function ItemCard({
           </div>
 
           {item.status === "In Storage" && showReturnForm ? (
-            <div className="return-form">
-              <label className="field">
-                <span>What would you like to do?</span>
-                <select
-                  value={returnMode}
-                  onChange={(event) => setReturnMode(event.target.value)}
-                >
-                  <option value="">Select an option</option>
-                  {RETURN_OPTIONS.map((optionLabel) => (
-                    <option key={optionLabel} value={optionLabel}>
-                      {optionLabel}
-                    </option>
-                  ))}
-                </select>
-              </label>
+            <div className="modal-overlay" role="dialog" aria-modal="true">
+              <div
+                className="modal-backdrop"
+                onClick={() => {
+                  setShowReturnForm(false);
+                  setReturnMode("");
+                }}
+              />
+              <div className="modal-card return-form">
+                <label className="field">
+                  <span>What would you like to do?</span>
+                  <select
+                    value={returnMode}
+                    onChange={(event) => setReturnMode(event.target.value)}
+                  >
+                    <option value="">Select an option</option>
+                    {RETURN_OPTIONS.map((optionLabel) => (
+                      <option key={optionLabel} value={optionLabel}>
+                        {optionLabel}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-              {returnMode === "Return at a later date" ? (
-                <>
-                  <label className="field">
-                    <span>Preferred date</span>
-                    <input
-                      type="date"
-                      value={returnDate}
-                      onChange={(event) => setReturnDate(event.target.value)}
-                    />
-                  </label>
-                  <label className="field">
-                    <span>Time window</span>
-                    <select
-                      value={returnWindow}
-                      onChange={(event) => setReturnWindow(event.target.value)}
-                    >
-                      <option value="">Select a time window</option>
-                      {RETURN_WINDOWS.map((windowLabel) => (
-                        <option key={windowLabel} value={windowLabel}>
-                          {windowLabel}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </>
-              ) : null}
+                {returnMode === "Return at a later date" ? (
+                  <>
+                    <label className="field">
+                      <span>Preferred date</span>
+                      <input
+                        type="date"
+                        value={returnDate}
+                        onChange={(event) => setReturnDate(event.target.value)}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Time window</span>
+                      <select
+                        value={returnWindow}
+                        onChange={(event) => setReturnWindow(event.target.value)}
+                      >
+                        <option value="">Select a time window</option>
+                        {RETURN_WINDOWS.map((windowLabel) => (
+                          <option key={windowLabel} value={windowLabel}>
+                            {windowLabel}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </>
+                ) : null}
 
-              <div className="button-row">
-                <button className="button primary" type="button" onClick={submitReturnRequest}>
-                  {returnMode === "Cancel storage" ? "Confirm return request" : "Save return request"}
-                </button>
-                <button
-                  className="button ghost"
-                  type="button"
-                  onClick={() => {
-                    setShowReturnForm(false);
-                    setReturnMode("");
-                  }}
-                >
-                  Cancel
-                </button>
+                <div className="button-row">
+                  <button className="button primary" type="button" onClick={submitReturnRequest}>
+                    {returnMode === "Cancel storage" ? "Confirm return request" : "Save return request"}
+                  </button>
+                  <button
+                    className="button ghost"
+                    type="button"
+                    onClick={() => {
+                      setShowReturnForm(false);
+                      setReturnMode("");
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
           ) : null}
