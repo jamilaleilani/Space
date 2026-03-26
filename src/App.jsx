@@ -3,8 +3,9 @@ import { startTransition, useDeferredValue, useEffect, useState } from "react";
 const STORAGE_KEY = "inventory-keeper-react-v1";
 const ACTION_CHOICES = ["Store", "Sell", "Dispose"];
 const STATUS_TABS = ["In Storage", "Returned", "To Sell", "To Dispose", "Sold", "Disposed", "Archive"];
-const USER_STATUS_TABS = ["See all", ...STATUS_TABS];
-const ADMIN_STATUS_TABS = ["See all", ...STATUS_TABS];
+const EXTRA_STATUS_TABS = ["To Be Returned"];
+const USER_STATUS_TABS = ["See all", ...EXTRA_STATUS_TABS, ...STATUS_TABS];
+const ADMIN_STATUS_TABS = ["See all", ...EXTRA_STATUS_TABS, ...STATUS_TABS];
 const RETURN_WINDOWS = ["Morning (8am-12pm)", "Afternoon (12pm-4pm)", "Evening (4pm-8pm)"];
 const RETURN_OPTIONS = ["Cancel item storage", "Bring back to storage at a later date"];
 const AUTO_ARCHIVE_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
@@ -579,13 +580,13 @@ function App() {
       : sourceItems;
 
   const filteredItems = ownerFilteredItems.filter((item) => {
-    const matchesStatus = selectedTab === "See all" ? true : item.status === selectedTab;
+    const matchesStatus = matchesItemTab(item, selectedTab);
     const haystack = `${item.name} ${item.category} ${item.description} ${item.location}`.toLowerCase();
     const matchesSearch = haystack.includes(deferredSearch.trim().toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
-  const tabCounts = buildTabCounts(ownerFilteredItems, true);
+  const tabCounts = buildTabCounts(ownerFilteredItems, session?.role === "admin" ? ADMIN_STATUS_TABS : USER_STATUS_TABS);
   const adminInboxItems = ownerFilteredItems
     .filter(
       (item) =>
@@ -1540,7 +1541,9 @@ function ItemCard({
   const canUserManageActions = canManage && item.status !== "Archive";
   const availableStatusActions =
     item.status === "Returned"
-      ? ACTION_CHOICES
+      ? ACTION_CHOICES.filter(
+          (status) => !(item.returnRequestType === "return-later" && status === "Store"),
+        )
       : ACTION_CHOICES.filter((status) => status !== currentActionChoice);
   const [showReturnForm, setShowReturnForm] = useState(false);
   const [showStorageForm, setShowStorageForm] = useState(false);
@@ -1788,6 +1791,15 @@ function ItemCard({
                 Return to me
               </button>
             ) : null}
+            {item.status === "Returned" && item.returnRequestType === "return-later" ? (
+              <button
+                className="button secondary"
+                type="button"
+                onClick={() => setShowStorageForm((current) => !current)}
+              >
+                {item.storageRequestDate ? "Edit bring back to storage date" : "Add bring back to storage date"}
+              </button>
+            ) : null}
             <button className="button ghost" type="button" onClick={() => onDelete(item.id)}>
               Delete
             </button>
@@ -2033,17 +2045,19 @@ function buildCounts(items) {
   );
 }
 
-function buildTabCounts(items, includeAllOption = false) {
-  const seedCounts = Object.fromEntries(STATUS_TABS.map((status) => [status, 0]));
-  const baseCounts = includeAllOption ? { "See all": items.length, ...seedCounts } : seedCounts;
+function buildTabCounts(items, tabs) {
+  const filteredTabs = tabs.filter((tab) => tab !== "See all");
+  const summary = { "See all": items.length, ...Object.fromEntries(filteredTabs.map((tab) => [tab, 0])) };
 
-  return items.reduce(
-    (summary, item) => ({
-      ...summary,
-      [item.status]: (summary[item.status] ?? 0) + 1,
-    }),
-    baseCounts,
-  );
+  items.forEach((item) => {
+    if (isPendingReturn(item)) {
+      summary["To Be Returned"] = (summary["To Be Returned"] ?? 0) + 1;
+    } else if (summary[item.status] !== undefined) {
+      summary[item.status] += 1;
+    }
+  });
+
+  return summary;
 }
 
 function loadState() {
@@ -2176,6 +2190,29 @@ function normalizeRequestDate(value) {
 
 function statusClass(status) {
   return `status-${status.toLowerCase().replace(/\s+/g, "-")}`;
+}
+
+function isPendingReturn(item) {
+  return (
+    item.status === "In Storage" &&
+    Boolean(item.returnRequestType || item.returnRequestDate || item.returnRequestWindow)
+  );
+}
+
+function matchesItemTab(item, tab) {
+  if (tab === "See all") {
+    return true;
+  }
+
+  if (tab === "To Be Returned") {
+    return isPendingReturn(item);
+  }
+
+  if (tab === "In Storage") {
+    return item.status === "In Storage" && !isPendingReturn(item);
+  }
+
+  return item.status === tab;
 }
 
 function normalizeStatus(status) {
