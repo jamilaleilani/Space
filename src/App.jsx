@@ -1532,10 +1532,6 @@ function ItemCard({
           </div>
           <span className={`status-tag ${statusClass(item.status)}`}>{item.status}</span>
         </div>
-
-        <p className="item-description item-description--compact">
-          {item.description || "Tap to view details."}
-        </p>
       </button>
     );
   }
