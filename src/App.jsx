@@ -591,9 +591,7 @@ function App() {
       (item) =>
         item.status === "To Sell" ||
         item.status === "To Dispose" ||
-        (item.status === "In Storage" &&
-          item.returnRequestWindow &&
-          (item.returnRequestWindow === "Cancel storage" || item.returnRequestDate)),
+        (item.status === "In Storage" && item.returnRequestType && item.returnRequestDate),
     )
     .filter((item) => {
       const haystack = `${item.name} ${item.category} ${item.description} ${item.location}`.toLowerCase();
@@ -813,9 +811,21 @@ function App() {
     });
   }
 
-  function handleReturnRequest(itemId, returnRequestDate, returnRequestWindow) {
-    const returnRequestType =
-      returnRequestWindow === "Cancel item storage" ? "cancel-storage" : "return-later";
+  function handleReturnRequest(
+    itemId,
+    { returnRequestType, returnRequestDate, returnRequestWindow, storageRequestDate, storageRequestWindow },
+  ) {
+    const typeLabel =
+      returnRequestType === "cancel-storage"
+        ? "Cancel item storage"
+        : "Bring back to storage at a later date";
+    const returnMessage = `Return requested for ${formatRequestDate(returnRequestDate)} during ${returnRequestWindow}.`;
+    const storageMessage =
+      returnRequestType === "return-later" && storageRequestDate && storageRequestWindow
+        ? `Storage pickup requested for ${formatRequestDate(storageRequestDate)} during ${storageRequestWindow}.`
+        : returnRequestType === "return-later" && storageRequestDate
+          ? `Storage pickup requested for ${formatRequestDate(storageRequestDate)}.`
+          : "";
 
     commit({
       ...data,
@@ -826,11 +836,12 @@ function App() {
               returnRequestDate,
               returnRequestWindow,
               returnRequestType,
+              storageRequestDate: storageRequestDate ?? "",
+              storageRequestWindow: storageRequestWindow ?? "",
               notifications: [
                 ...(item.notifications ?? []),
-                returnRequestWindow === "Cancel item storage"
-                  ? "Return requested with cancel storage."
-                  : `Return requested for ${formatRequestDate(returnRequestDate)} during ${returnRequestWindow}.`,
+                `${returnMessage} ${typeLabel}.`.trim(),
+                ...(storageMessage ? [storageMessage] : []),
               ],
               updatedAt: new Date().toISOString(),
             }
@@ -1535,7 +1546,9 @@ function ItemCard({
   const [showActionLog, setShowActionLog] = useState(false);
   const [returnMode, setReturnMode] = useState("");
   const [returnDate, setReturnDate] = useState(item.returnRequestDate ?? "");
-  const [returnWindow, setReturnWindow] = useState(item.returnRequestWindow ?? "");
+  const [returnWindow, setReturnWindow] = useState(
+    RETURN_WINDOWS.includes(item.returnRequestWindow) ? item.returnRequestWindow : "",
+  );
   const [storageDate, setStorageDate] = useState(item.storageRequestDate ?? "");
   const [storageWindow, setStorageWindow] = useState(item.storageRequestWindow ?? "");
   const adminCanChangeStatus = !["Sold", "Disposed", "Archive"].includes(item.status);
@@ -1562,22 +1575,24 @@ function ItemCard({
     : [];
 
   function submitReturnRequest() {
-    if (returnMode === "Cancel item storage") {
-      onReturnRequest(item.id, "", "Cancel item storage");
-      setShowReturnForm(false);
-      setReturnMode("");
-      setReturnDate("");
-      setReturnWindow("");
-      return;
-    }
-
     if (!returnDate || !returnWindow) {
       return;
     }
 
-    onReturnRequest(item.id, returnDate, returnWindow);
+    onReturnRequest(item.id, {
+      returnRequestType:
+        returnMode === "Cancel item storage" ? "cancel-storage" : "return-later",
+      returnRequestDate: returnDate,
+      returnRequestWindow: returnWindow,
+      storageRequestDate: returnMode === "Bring back to storage at a later date" ? storageDate : "",
+      storageRequestWindow: returnMode === "Bring back to storage at a later date" ? storageWindow : "",
+    });
     setShowReturnForm(false);
     setReturnMode("");
+    setReturnDate("");
+    setReturnWindow("");
+    setStorageDate("");
+    setStorageWindow("");
   }
 
   function submitStorageRequest() {
@@ -1670,10 +1685,21 @@ function ItemCard({
         <div className="return-summary">
           <strong>Return requested</strong>
           <p>
-            {item.returnRequestWindow === "Cancel item storage"
-              ? "Cancel item storage"
-              : `${formatRequestDate(item.returnRequestDate)} during ${item.returnRequestWindow}`}
+            {`${formatRequestDate(item.returnRequestDate)} during ${item.returnRequestWindow}`}
           </p>
+          <p>
+            {item.returnRequestType === "cancel-storage"
+              ? "Cancel item storage"
+              : "Bring back to storage at a later date"}
+          </p>
+          {item.returnRequestType === "return-later" && item.storageRequestDate ? (
+            <p>
+              Pickup back to storage:
+              {" "}
+              {formatRequestDate(item.storageRequestDate)}
+              {item.storageRequestWindow ? ` during ${item.storageRequestWindow}` : ""}
+            </p>
+          ) : null}
         </div>
       ) : null}
 
@@ -1783,7 +1809,7 @@ function ItemCard({
                 {returnMode === "Bring back to storage at a later date" ? (
                   <>
                     <label className="field">
-                      <span>Preferred date</span>
+                      <span>When would you like this item returned to you?</span>
                       <input
                         type="date"
                         value={returnDate}
@@ -1791,7 +1817,54 @@ function ItemCard({
                       />
                     </label>
                     <label className="field">
-                      <span>Time window</span>
+                      <span>What time window works for the return?</span>
+                      <select
+                        value={returnWindow}
+                        onChange={(event) => setReturnWindow(event.target.value)}
+                      >
+                        <option value="">Select a time window</option>
+                        {RETURN_WINDOWS.map((windowLabel) => (
+                          <option key={windowLabel} value={windowLabel}>
+                            {windowLabel}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="field">
+                      <span>When should this item be picked back up for storage? (Optional)</span>
+                      <input
+                        type="date"
+                        value={storageDate}
+                        onChange={(event) => setStorageDate(event.target.value)}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Pickup time window for storage? (Optional)</span>
+                      <select
+                        value={storageWindow}
+                        onChange={(event) => setStorageWindow(event.target.value)}
+                      >
+                        <option value="">Select an optional time window</option>
+                        {RETURN_WINDOWS.map((windowLabel) => (
+                          <option key={windowLabel} value={windowLabel}>
+                            {windowLabel}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </>
+                ) : returnMode === "Cancel item storage" ? (
+                  <>
+                    <label className="field">
+                      <span>When would you like this item returned to you?</span>
+                      <input
+                        type="date"
+                        value={returnDate}
+                        onChange={(event) => setReturnDate(event.target.value)}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>What time window works for the return?</span>
                       <select
                         value={returnWindow}
                         onChange={(event) => setReturnWindow(event.target.value)}
@@ -1907,8 +1980,8 @@ function ItemCard({
               Edit
             </button>
             {item.status === "In Storage" &&
-            item.returnRequestWindow &&
-            (item.returnRequestWindow === "Cancel item storage" || item.returnRequestDate) ? (
+            item.returnRequestType &&
+            item.returnRequestDate ? (
               <button
                 className="button primary"
                 type="button"
