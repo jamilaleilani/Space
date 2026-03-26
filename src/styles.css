@@ -200,7 +200,6 @@ textarea {
 .form-grid,
 .meta-grid,
 .card-grid,
-.card-grid--compact,
 .admin-summary-grid,
 .request-list,
 .toolbar,
@@ -212,6 +211,10 @@ textarea {
   min-width: 0;
   grid-template-columns: 1fr;
   overflow-x: hidden;
+}
+
+.card-grid--compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .pill {
