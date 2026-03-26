@@ -757,7 +757,7 @@ function App() {
       category: item.category,
       description: item.description,
       status: mapStatusToActionChoice(item.status),
-      image: item.image ?? "",
+      image: item.image || "",
     });
   }
 
@@ -1899,7 +1899,7 @@ function loadState() {
     const parsed = applyArchiveRules(JSON.parse(saved));
     const savedItems = (parsed.items ?? []).map((item) => ({
       ...item,
-      image: item.image ?? SAMPLE_ITEM_IMAGES[item.id] ?? "",
+      image: item.image || SAMPLE_ITEM_IMAGES[item.id] || "",
       notifications: item.notifications ?? [],
       returnRequestDate: item.returnRequestDate ?? "",
       returnRequestWindow: item.returnRequestWindow ?? "",
