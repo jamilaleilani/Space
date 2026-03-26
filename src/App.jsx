@@ -1557,15 +1557,6 @@ function ItemCard({
       });
     }
 
-    if (status === "Dispose" && item.status === "To Dispose") {
-      buttons.push({
-        key: `admin-${item.id}-Disposed`,
-        label: "Disposed",
-        className: "button primary",
-        onClick: () => onAdminStatusCompletion(item.id, "Disposed"),
-      });
-    }
-
     return buttons;
       })
     : [];
