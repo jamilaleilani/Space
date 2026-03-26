@@ -1764,7 +1764,7 @@ function ItemCard({
             </div>
           </div>
           <div className="button-row">
-            {item.status === "In Storage" ? (
+            {item.status === "In Storage" && !item.returnRequestType ? (
               <button
                 className="button secondary"
                 type="button"
