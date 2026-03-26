@@ -1661,6 +1661,18 @@ function ItemCard({
               Sold
             </button>
           ) : null}
+          {canAdminManage &&
+          item.status === "In Storage" &&
+          item.returnRequestType &&
+          item.returnRequestDate ? (
+            <button
+              className="button primary status-stack__action"
+              type="button"
+              onClick={() => onAdminStatusCompletion(item.id, "Returned")}
+            >
+              Returned
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -1977,17 +1989,6 @@ function ItemCard({
             <button className="button secondary" type="button" onClick={() => onEdit(item)}>
               Edit
             </button>
-            {item.status === "In Storage" &&
-            item.returnRequestType &&
-            item.returnRequestDate ? (
-              <button
-                className="button primary"
-                type="button"
-                onClick={() => onAdminStatusCompletion(item.id, "Returned")}
-              >
-                Returned
-              </button>
-            ) : null}
           </div>
         </>
       ) : null}
