@@ -170,6 +170,12 @@ textarea {
   margin: 0;
 }
 
+.auth-divider {
+  height: 1px;
+  margin: 18px 0;
+  background: rgba(255, 255, 255, 0.12);
+}
+
 .session-panel__inner,
 .pill-row,
 .form-grid,

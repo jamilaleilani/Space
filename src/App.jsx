@@ -564,6 +564,10 @@ function App() {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
+  const [signupName, setSignupName] = useState("");
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [signupError, setSignupError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTab, setSelectedTab] = useState("See all");
   const [selectedAdminOwner, setSelectedAdminOwner] = useState("all");
@@ -648,6 +652,10 @@ function App() {
     setLoginEmail("");
     setLoginPassword("");
     setLoginError("");
+    setSignupName("");
+    setSignupEmail("");
+    setSignupPassword("");
+    setSignupError("");
     resetWorkspace();
   }
 
@@ -655,6 +663,7 @@ function App() {
     setSessionId("");
     setLoginPassword("");
     setLoginError("");
+    setSignupError("");
     resetWorkspace();
   }
 
@@ -672,6 +681,41 @@ function App() {
     }
 
     handleLogin(account.id);
+  }
+
+  function handleSignupSubmit(event) {
+    event.preventDefault();
+
+    const name = signupName.trim();
+    const email = signupEmail.trim().toLowerCase();
+    const password = signupPassword;
+
+    if (!name || !email || !password) {
+      setSignupError("Please fill in your name, email, and password.");
+      return;
+    }
+
+    const emailInUse = data.accounts.some((account) => account.email.toLowerCase() === email);
+    if (emailInUse) {
+      setSignupError("An account with that email already exists.");
+      return;
+    }
+
+    const nextUser = {
+      id: crypto.randomUUID(),
+      name,
+      email,
+      role: "user",
+      password,
+      clientSince: new Date().toISOString().slice(0, 10),
+    };
+
+    commit({
+      ...data,
+      accounts: [...data.accounts, nextUser],
+    });
+
+    handleLogin(nextUser.id);
   }
 
   function handleSearchChange(event) {
@@ -1056,6 +1100,53 @@ function App() {
 
               <button className="button primary" type="submit">
                 Log in
+              </button>
+            </form>
+
+            <div className="auth-divider" aria-hidden="true" />
+
+            <div className="section-heading login-heading">
+              <div>
+                <p className="section-label">Create account</p>
+                <h2>Sign up</h2>
+              </div>
+            </div>
+
+            <form className="login-form" onSubmit={handleSignupSubmit}>
+              <label className="field">
+                <span>Full name</span>
+                <input
+                  type="text"
+                  value={signupName}
+                  onChange={(event) => setSignupName(event.target.value)}
+                  placeholder="Your name"
+                />
+              </label>
+
+              <label className="field">
+                <span>Email</span>
+                <input
+                  type="email"
+                  value={signupEmail}
+                  onChange={(event) => setSignupEmail(event.target.value)}
+                  placeholder="name@example.com"
+                />
+              </label>
+
+              <label className="field">
+                <span>Password</span>
+                <input
+                  type="password"
+                  value={signupPassword}
+                  onChange={(event) => setSignupPassword(event.target.value)}
+                  placeholder="Create password"
+                />
+              </label>
+
+              {signupError ? <p className="login-error">{signupError}</p> : null}
+
+              <button className="button secondary" type="submit">
+                Create account
               </button>
             </form>
 
