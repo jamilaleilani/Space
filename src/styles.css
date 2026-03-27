@@ -879,6 +879,20 @@ dd,
   font-size: 1rem;
 }
 
+@media (max-width: 899px) {
+  .auth-hero .hero-copy {
+    display: flex !important;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .auth-hero .hero-panel {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
 @media (min-width: 640px) {
   #root {
     max-width: 720px;
