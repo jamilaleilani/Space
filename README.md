@@ -65,5 +65,4 @@ To publish it:
 
 ## Demo accounts
 
-- `David Balaban` - User - `balabdavid@gmail.com` / `Temp123!`
 - `James Breedlove` - Admin - `Breedlovejames@yahoo.com` / `Admin123!`

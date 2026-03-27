@@ -12,7 +12,11 @@ const RETURN_OPTIONS = ["Cancel item storage", "Bring back to storage at a later
 const AUTO_ARCHIVE_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
 const ACTION_LOG_RESET_VERSION = 1;
 const ADMIN_EMAILS = new Set(["breedlovejames@yahoo.com", "jamilaleilanikeba@gmail.com"]);
-const REMOVED_SAMPLE_EMAILS = new Set(["maya@example.com", "jordan@example.com"]);
+const REMOVED_SAMPLE_EMAILS = new Set([
+  "maya@example.com",
+  "jordan@example.com",
+  "balabdavid@gmail.com",
+]);
 const SAMPLE_ITEM_IMAGES = {
   "item-1": makeIllustration({
     title: "Winter Coat",
@@ -228,14 +232,6 @@ const SAMPLE_ITEM_IMAGES = {
 
 const seedData = {
   accounts: [
-    {
-      id: "user-3",
-      name: "David Balaban",
-      role: "user",
-      email: "balabdavid@gmail.com",
-      password: "Temp123!",
-      clientSince: "2026-03-26",
-    },
   ],
   items: [],
 };
@@ -2539,9 +2535,7 @@ function loadStateFromRaw(rawData, { includeSeedDefaults = true } = {}) {
       return {
         ...account,
         name:
-          account.id === "user-3"
-            ? "David Balaban"
-            : account.name ?? seedAccount?.name ?? "Unnamed user",
+          account.name ?? seedAccount?.name ?? "Unnamed user",
         email: account.email ?? seedAccount?.email ?? "",
         role:
           isAdminEmail(normalizedEmail) || account.role === "admin" || seedAccount?.role === "admin"
