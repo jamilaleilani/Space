@@ -1,4 +1,4 @@
-import { startTransition, useDeferredValue, useEffect, useState } from "react";
+import { startTransition, useDeferredValue, useEffect, useRef, useState } from "react";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
 
 const STORAGE_KEY = "inventory-keeper-react-v1";
@@ -275,6 +275,7 @@ function App() {
   const [selectedItemSource, setSelectedItemSource] = useState("inventory");
   const [selectedProfileId, setSelectedProfileId] = useState("");
   const [createUserError, setCreateUserError] = useState("");
+  const saveQueueRef = useRef(Promise.resolve());
 
   const deferredSearch = useDeferredValue(searchTerm);
   const activeSessionId = isSupabaseConfigured ? authSession?.user?.id ?? "" : sessionId;
@@ -370,6 +371,7 @@ function App() {
       setSessionId(nextSession?.user?.id ?? "");
 
       if (nextSession?.user) {
+        setAuthReady(false);
         await ensureSupabaseAccount(nextSession.user);
       } else if (isActive) {
         setAuthReady(true);
@@ -412,7 +414,9 @@ function App() {
     saveLocalState(nextData);
 
     if (isSupabaseConfigured && supabase && backendReady) {
-      saveSupabaseState(nextData);
+      saveQueueRef.current = saveQueueRef.current
+        .catch(() => undefined)
+        .then(() => saveSupabaseState(nextData));
     }
   }
 
@@ -464,12 +468,16 @@ function App() {
       const accountIds = nextData.accounts.map((account) => account.id);
       const itemIds = nextData.items.map((item) => item.id);
 
-      const { error: accountsUpsertError } = await supabase.from("app_accounts").upsert(accountsPayload);
+      const { error: accountsUpsertError } = await supabase
+        .from("app_accounts")
+        .upsert(accountsPayload, { onConflict: "id" });
       if (accountsUpsertError) {
         throw accountsUpsertError;
       }
 
-      const { error: itemsUpsertError } = await supabase.from("items").upsert(itemsPayload);
+      const { error: itemsUpsertError } = await supabase
+        .from("items")
+        .upsert(itemsPayload, { onConflict: "id" });
       if (itemsUpsertError) {
         throw itemsUpsertError;
       }
@@ -571,7 +579,7 @@ function App() {
 
       const { error: upsertError } = await supabase
         .from("app_accounts")
-        .upsert(serializeAccount(nextAccount));
+        .upsert(serializeAccount(nextAccount), { onConflict: "id" });
 
       if (upsertError) {
         throw upsertError;
@@ -838,7 +846,7 @@ function App() {
 
       const { error: accountError } = await supabase
         .from("app_accounts")
-        .upsert(serializeAccount(updatedAccount));
+        .upsert(serializeAccount(updatedAccount), { onConflict: "id" });
 
       if (accountError) {
         setProfileError(accountError.message);
@@ -1372,6 +1380,20 @@ function App() {
                   <span>{account.email}</span>
                 </button>
               ))}
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  if (isSupabaseConfigured && session && (!authReady || !backendReady)) {
+    return (
+      <div className="shell">
+        <section className="panel session-panel">
+          <div className="session-panel__inner">
+            <div className="backend-status backend-status--ok">
+              Syncing your shared account data...
             </div>
           </div>
         </section>
