@@ -432,11 +432,24 @@ function App() {
         return loadStateFromRaw(seedData);
       }
 
-      return loadStateFromRaw({
+      const normalizedState = loadStateFromRaw({
         accounts: (accounts ?? []).map(deserializeAccount),
         items: (items ?? []).map(deserializeItem),
         actionLogResetVersion: ACTION_LOG_RESET_VERSION,
       });
+
+      const hasDuplicateAccounts =
+        new Set((accounts ?? []).map((account) => normalizeEmail(account.email))).size !==
+        (accounts ?? []).length;
+      const shouldRewriteItems =
+        normalizedState.items.length !== (items ?? []).length ||
+        normalizedState.items.some((item) => !normalizedState.accounts.some((account) => account.id === item.ownerId));
+
+      if (hasDuplicateAccounts || shouldRewriteItems || normalizedState.accounts.length !== (accounts ?? []).length) {
+        await saveSupabaseState(normalizedState);
+      }
+
+      return normalizedState;
     } catch (error) {
       setBackendError(error?.message ?? "Unable to reach Supabase. Using local data for now.");
       return null;
@@ -2504,14 +2517,50 @@ function loadStateFromRaw(rawData, { includeSeedDefaults = true } = {}) {
       updatedAt: normalizeTimestamp(item.updatedAt) || new Date().toISOString(),
     };
   });
+  const dedupeMap = new Map();
+  const duplicateAccountAliases = new Map();
   const normalizedAccounts = (parsed.accounts ?? [])
     .filter((account) => !REMOVED_SAMPLE_EMAILS.has(normalizeEmail(account.email)))
     .map((account) => ({
       ...account,
       email: account.email ?? "",
-    }));
+    }))
+    .reduce((accounts, account) => {
+      const normalizedEmail = normalizeEmail(account.email);
+
+      if (!normalizedEmail) {
+        accounts.push(account);
+        return accounts;
+      }
+
+      const existingAccount = dedupeMap.get(normalizedEmail);
+      if (!existingAccount) {
+        dedupeMap.set(normalizedEmail, account);
+        accounts.push(account);
+        return accounts;
+      }
+
+      const preferredAccount = choosePreferredAccount(existingAccount, account);
+      const duplicateAccount = preferredAccount === existingAccount ? account : existingAccount;
+
+      dedupeMap.set(normalizedEmail, preferredAccount);
+      duplicateAccountAliases.set(duplicateAccount.id, preferredAccount.id);
+
+      if (preferredAccount !== existingAccount) {
+        const existingIndex = accounts.findIndex((entry) => entry.id === existingAccount.id);
+        if (existingIndex >= 0) {
+          accounts[existingIndex] = preferredAccount;
+        }
+      }
+
+      return accounts;
+    }, []);
+  const remappedItems = savedItems.map((item) => ({
+    ...item,
+    ownerId: duplicateAccountAliases.get(item.ownerId) ?? item.ownerId,
+  }));
   const allowedAccountIds = new Set(normalizedAccounts.map((account) => account.id));
-  const prunedItems = savedItems.filter((item) => allowedAccountIds.has(item.ownerId));
+  const prunedItems = remappedItems.filter((item) => allowedAccountIds.has(item.ownerId));
   const mergedAccounts = [...normalizedAccounts];
 
   if (includeSeedDefaults) {
@@ -2567,6 +2616,32 @@ function normalizeEmail(value) {
 
 function isAdminEmail(email) {
   return ADMIN_EMAILS.has(normalizeEmail(email));
+}
+
+function choosePreferredAccount(left, right) {
+  return scoreAccountCandidate(right) > scoreAccountCandidate(left) ? right : left;
+}
+
+function scoreAccountCandidate(account) {
+  let score = 0;
+
+  if (!/^(admin|user)-/.test(account.id ?? "")) {
+    score += 4;
+  }
+
+  if (account.role === "admin") {
+    score += 2;
+  }
+
+  if (normalizeRequestDate(account.clientSince)) {
+    score += 1;
+  }
+
+  if (account.name) {
+    score += 1;
+  }
+
+  return score;
 }
 
 function serializeAccount(account) {
