@@ -65,7 +65,5 @@ To publish it:
 
 ## Demo accounts
 
-- `Maya Patel` - User - `maya@example.com` / `Maya123!`
-- `Jordan Lee` - User - `jordan@example.com` / `Jordan123!`
 - `David Balaban` - User - `balabdavid@gmail.com` / `Temp123!`
 - `James Breedlove` - Admin - `Breedlovejames@yahoo.com` / `Admin123!`
