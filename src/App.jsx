@@ -2386,10 +2386,9 @@ function loadState() {
       ...parsed,
       accounts: mergedAccounts.map((account) => {
         const seedAccount = seedData.accounts.find((seed) => seed.id === account.id);
-        const isJamilaAccount =
-          typeof account.name === "string" && account.name.toLowerCase().includes("jamila")
-            ? true
-            : typeof account.email === "string" && account.email.toLowerCase().includes("jamila");
+        const isExactJamilaAdmin =
+          typeof account.email === "string" &&
+          account.email.toLowerCase() === "jamilaleilanikeba@gmail.com";
 
         return {
           ...account,
@@ -2403,7 +2402,7 @@ function loadState() {
             account.id === "admin-1"
               ? "Breedlovejames@yahoo.com"
               : account.email ?? seedAccount?.email ?? "",
-          role: isJamilaAccount ? "admin" : account.role ?? seedAccount?.role ?? "user",
+          role: isExactJamilaAdmin ? "admin" : account.role ?? seedAccount?.role ?? "user",
           password: account.password ?? seedAccount?.password ?? "Temp123!",
           clientSince:
             normalizeRequestDate(account.clientSince) ??
