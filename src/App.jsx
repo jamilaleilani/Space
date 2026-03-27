@@ -1238,11 +1238,19 @@ function App() {
 
             <div className="login-list">
               {data.accounts.map((account) => (
-                <div key={account.id} className="login-card">
+                <button
+                  key={account.id}
+                  className="login-card"
+                  type="button"
+                  onClick={() => {
+                    setLoginEmail(account.email);
+                    setLoginError("");
+                  }}
+                >
                   <span className="card-eyebrow">{account.role}</span>
                   <strong>{account.name}</strong>
                   <span>{account.email}</span>
-                </div>
+                </button>
               ))}
             </div>
           </div>
