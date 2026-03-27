@@ -11,7 +11,7 @@ const RETURN_WINDOWS = ["Morning (8am-12pm)", "Afternoon (12pm-4pm)", "Evening (
 const RETURN_OPTIONS = ["Cancel item storage", "Bring back to storage at a later date"];
 const AUTO_ARCHIVE_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
 const ACTION_LOG_RESET_VERSION = 1;
-const ADMIN_EMAILS = new Set(["breedlovejames@yahoo.com", "jamilaleilanikeba@gmail.com"]);
+const ADMIN_EMAILS = new Set(["breedlovejames@yahoo.com"]);
 const REMOVED_SAMPLE_EMAILS = new Set([
   "maya@example.com",
   "jordan@example.com",
