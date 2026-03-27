@@ -342,7 +342,12 @@ function App() {
       }
 
       if (loadedState) {
-        setData(applyArchiveRules(loadedState));
+        const mergedState = mergeStates(data, loadedState);
+        setData(applyArchiveRules(mergedState.state));
+
+        if (mergedState.requiresSync) {
+          await saveSupabaseState(mergedState.state);
+        }
       }
 
       setBackendReady(true);
@@ -2664,6 +2669,78 @@ function scoreAccountCandidate(account) {
   }
 
   return score;
+}
+
+function mergeStates(localState, remoteState) {
+  const mergedAccounts = [];
+  const accountKeyToIndex = new Map();
+  let requiresSync = false;
+
+  function upsertAccount(account, source) {
+    const key = normalizeEmail(account.email) || account.id;
+    const existingIndex = accountKeyToIndex.get(key);
+
+    if (existingIndex === undefined) {
+      accountKeyToIndex.set(key, mergedAccounts.length);
+      mergedAccounts.push(account);
+      if (source === "local") {
+        requiresSync = true;
+      }
+      return;
+    }
+
+    const existingAccount = mergedAccounts[existingIndex];
+    const preferredAccount = choosePreferredAccount(existingAccount, account);
+
+    if (preferredAccount !== existingAccount) {
+      mergedAccounts[existingIndex] = preferredAccount;
+      if (source === "local") {
+        requiresSync = true;
+      }
+    }
+  }
+
+  (remoteState.accounts ?? []).forEach((account) => upsertAccount(account, "remote"));
+  (localState.accounts ?? []).forEach((account) => upsertAccount(account, "local"));
+
+  const mergedItems = [];
+  const itemIndexById = new Map();
+
+  function upsertItem(item, source) {
+    const existingIndex = itemIndexById.get(item.id);
+
+    if (existingIndex === undefined) {
+      itemIndexById.set(item.id, mergedItems.length);
+      mergedItems.push(item);
+      if (source === "local") {
+        requiresSync = true;
+      }
+      return;
+    }
+
+    const existingItem = mergedItems[existingIndex];
+    const existingTime = new Date(existingItem.updatedAt).getTime();
+    const nextTime = new Date(item.updatedAt).getTime();
+
+    if (Number.isFinite(nextTime) && (!Number.isFinite(existingTime) || nextTime > existingTime)) {
+      mergedItems[existingIndex] = item;
+      if (source === "local") {
+        requiresSync = true;
+      }
+    }
+  }
+
+  (remoteState.items ?? []).forEach((item) => upsertItem(item, "remote"));
+  (localState.items ?? []).forEach((item) => upsertItem(item, "local"));
+
+  return {
+    state: loadStateFromRaw({
+      accounts: mergedAccounts,
+      items: mergedItems,
+      actionLogResetVersion: ACTION_LOG_RESET_VERSION,
+    }),
+    requiresSync,
+  };
 }
 
 function serializeAccount(account) {
