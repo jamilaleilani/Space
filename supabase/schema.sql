@@ -3,7 +3,7 @@ create table if not exists public.app_accounts (
   name text not null,
   role text not null check (role in ('user', 'admin')),
   email text not null unique,
-  password text not null,
+  password text not null default '',
   client_since date not null default current_date,
   created_at timestamptz not null default now()
 );

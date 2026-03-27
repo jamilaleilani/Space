@@ -11,6 +11,7 @@ const RETURN_WINDOWS = ["Morning (8am-12pm)", "Afternoon (12pm-4pm)", "Evening (
 const RETURN_OPTIONS = ["Cancel item storage", "Bring back to storage at a later date"];
 const AUTO_ARCHIVE_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
 const ACTION_LOG_RESET_VERSION = 1;
+const ADMIN_EMAILS = new Set(["breedlovejames@yahoo.com", "jamilaleilanikeba@gmail.com"]);
 const SAMPLE_ITEM_IMAGES = {
   "item-1": makeIllustration({
     title: "Winter Coat",
@@ -563,6 +564,8 @@ function App() {
   const [data, setData] = useState(loadState);
   const [backendReady, setBackendReady] = useState(!isSupabaseConfigured);
   const [backendError, setBackendError] = useState("");
+  const [authSession, setAuthSession] = useState(null);
+  const [authReady, setAuthReady] = useState(!isSupabaseConfigured);
   const [sessionId, setSessionId] = useState("");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -587,9 +590,11 @@ function App() {
   const [selectedItemId, setSelectedItemId] = useState("");
   const [selectedItemSource, setSelectedItemSource] = useState("inventory");
   const [selectedProfileId, setSelectedProfileId] = useState("");
+  const [createUserError, setCreateUserError] = useState("");
 
   const deferredSearch = useDeferredValue(searchTerm);
-  const session = data.accounts.find((account) => account.id === sessionId) ?? null;
+  const activeSessionId = isSupabaseConfigured ? authSession?.user?.id ?? "" : sessionId;
+  const session = data.accounts.find((account) => account.id === activeSessionId) ?? null;
   const userAccounts = data.accounts.filter((account) => account.role === "user");
 
   const sourceItems =
@@ -665,6 +670,54 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) {
+      return;
+    }
+
+    let isActive = true;
+
+    async function syncAuthState(nextSession) {
+      if (!isActive) {
+        return;
+      }
+
+      setAuthSession(nextSession);
+      setSessionId(nextSession?.user?.id ?? "");
+
+      if (nextSession?.user) {
+        await ensureSupabaseAccount(nextSession.user);
+      } else if (isActive) {
+        setAuthReady(true);
+      }
+    }
+
+    supabase.auth
+      .getSession()
+      .then(({ data: authData, error }) => {
+        if (error) {
+          setBackendError(error.message);
+        }
+
+        return syncAuthState(authData?.session ?? null);
+      })
+      .catch((error) => {
+        setBackendError(error?.message ?? "Unable to load Supabase auth session.");
+        setAuthReady(true);
+      });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      void syncAuthState(nextSession);
+    });
+
+    return () => {
+      isActive = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
   function commit(nextData) {
     const preparedData = applyArchiveRules(nextData);
     setData(preparedData);
@@ -699,7 +752,7 @@ function App() {
         accounts: (accounts ?? []).map(deserializeAccount),
         items: (items ?? []).map(deserializeItem),
         actionLogResetVersion: ACTION_LOG_RESET_VERSION,
-      });
+      }, { includeSeedDefaults: false });
     } catch (error) {
       setBackendError(error?.message ?? "Unable to reach Supabase. Using local data for now.");
       return null;
@@ -772,6 +825,95 @@ function App() {
     }
   }
 
+  async function ensureSupabaseAccount(authUser, preferredName = "") {
+    if (!supabase) {
+      return null;
+    }
+
+    try {
+      const email = normalizeEmail(authUser.email);
+
+      if (!email) {
+        setAuthReady(true);
+        return null;
+      }
+
+      const { data: existingAccount, error: existingAccountError } = await supabase
+        .from("app_accounts")
+        .select("*")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (existingAccountError) {
+        throw existingAccountError;
+      }
+
+      const seedAccount = seedData.accounts.find((account) => normalizeEmail(account.email) === email);
+      const nameFromMetadata =
+        typeof authUser.user_metadata?.name === "string"
+          ? authUser.user_metadata.name.trim()
+          : "";
+      const nextAccount = {
+        id: authUser.id,
+        name:
+          preferredName.trim() ||
+          nameFromMetadata ||
+          existingAccount?.name ||
+          seedAccount?.name ||
+          email.split("@")[0],
+        role: isAdminEmail(email) || existingAccount?.role === "admin" || seedAccount?.role === "admin"
+          ? "admin"
+          : "user",
+        email,
+        password: "",
+        clientSince:
+          normalizeRequestDate(existingAccount?.client_since ?? existingAccount?.clientSince) ||
+          seedAccount?.clientSince ||
+          new Date().toISOString().slice(0, 10),
+      };
+
+      const { error: upsertError } = await supabase
+        .from("app_accounts")
+        .upsert(serializeAccount(nextAccount));
+
+      if (upsertError) {
+        throw upsertError;
+      }
+
+      if (existingAccount && existingAccount.id !== authUser.id) {
+        const { error: itemsReassignError } = await supabase
+          .from("items")
+          .update({ owner_id: authUser.id })
+          .eq("owner_id", existingAccount.id);
+
+        if (itemsReassignError) {
+          throw itemsReassignError;
+        }
+
+        const { error: deleteLegacyAccountError } = await supabase
+          .from("app_accounts")
+          .delete()
+          .eq("id", existingAccount.id);
+
+        if (deleteLegacyAccountError) {
+          throw deleteLegacyAccountError;
+        }
+      }
+
+      const loadedState = await fetchSupabaseState();
+      if (loadedState) {
+        setData(applyArchiveRules(loadedState));
+      }
+
+      setAuthReady(true);
+      return nextAccount;
+    } catch (error) {
+      setBackendError(error?.message ?? "Unable to sync the signed-in account with Supabase.");
+      setAuthReady(true);
+      return null;
+    }
+  }
+
   function resetWorkspace() {
     setDraft(emptyForm);
     setEditingId("");
@@ -787,6 +929,10 @@ function App() {
   }
 
   function handleLogin(nextSessionId) {
+    if (isSupabaseConfigured) {
+      return;
+    }
+
     const nextSession = data.accounts.find((account) => account.id === nextSessionId) ?? null;
     setSessionId(nextSessionId);
     setLoginEmail("");
@@ -800,14 +946,25 @@ function App() {
     setShowProfileForm(false);
     setProfileName(nextSession?.name ?? "");
     setProfileEmail(nextSession?.email ?? "");
-    setProfilePassword(nextSession?.password ?? "");
-    setProfilePasswordConfirm(nextSession?.password ?? "");
+    setProfilePassword("");
+    setProfilePasswordConfirm("");
     setProfileError("");
+    setCreateUserError("");
     resetWorkspace();
   }
 
-  function handleLogout() {
+  async function handleLogout() {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        setLoginError(error.message);
+        return;
+      }
+    }
+
     setSessionId("");
+    setAuthSession(null);
     setLoginPassword("");
     setLoginError("");
     setSignupError("");
@@ -817,13 +974,37 @@ function App() {
     setProfilePassword("");
     setProfilePasswordConfirm("");
     setProfileError("");
+    setCreateUserError("");
     resetWorkspace();
   }
 
-  function handleLoginSubmit(event) {
+  async function handleLoginSubmit(event) {
     event.preventDefault();
 
     const email = loginEmail.trim().toLowerCase();
+
+    if (isSupabaseConfigured && supabase) {
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
+        email,
+        password: loginPassword,
+      });
+
+      if (error) {
+        setLoginError(error.message);
+        return;
+      }
+
+      setLoginError("");
+      setLoginPassword("");
+      resetWorkspace();
+
+      if (authData.user) {
+        await ensureSupabaseAccount(authData.user);
+      }
+
+      return;
+    }
+
     const account = data.accounts.find(
       (entry) => entry.email.toLowerCase() === email && entry.password === loginPassword,
     );
@@ -836,7 +1017,7 @@ function App() {
     handleLogin(account.id);
   }
 
-  function handleSignupSubmit(event) {
+  async function handleSignupSubmit(event) {
     event.preventDefault();
 
     const name = signupName.trim();
@@ -860,6 +1041,34 @@ function App() {
       return;
     }
 
+    if (isSupabaseConfigured && supabase) {
+      const { data: authData, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+          },
+        },
+      });
+
+      if (error) {
+        setSignupError(error.message);
+        return;
+      }
+
+      if (authData.user) {
+        await ensureSupabaseAccount(authData.user, name);
+      }
+
+      setSignupError(authData.session ? "" : "Account created. Check your email to confirm sign in.");
+      setSignupName("");
+      setSignupEmail("");
+      setSignupPassword("");
+      setSignupPasswordConfirm("");
+      return;
+    }
+
     const nextUser = {
       id: crypto.randomUUID(),
       name,
@@ -877,7 +1086,7 @@ function App() {
     handleLogin(nextUser.id);
   }
 
-  function handleProfileSubmit(event) {
+  async function handleProfileSubmit(event) {
     event.preventDefault();
 
     if (!session) {
@@ -905,6 +1114,57 @@ function App() {
 
     if (emailInUse) {
       setProfileError("Another account is already using that email.");
+      return;
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      const { data: authData, error } = await supabase.auth.updateUser({
+        email,
+        password,
+        data: {
+          name,
+        },
+      });
+
+      if (error) {
+        setProfileError(error.message);
+        return;
+      }
+
+      const updatedAccount = {
+        ...session,
+        name,
+        email,
+        password: "",
+        role: isAdminEmail(email) ? "admin" : session.role,
+      };
+
+      const { error: accountError } = await supabase
+        .from("app_accounts")
+        .upsert(serializeAccount(updatedAccount));
+
+      if (accountError) {
+        setProfileError(accountError.message);
+        return;
+      }
+
+      commit({
+        ...data,
+        accounts: data.accounts.map((account) =>
+          account.id === session.id
+            ? updatedAccount
+            : account,
+        ),
+      });
+
+      if (authData.user) {
+        await ensureSupabaseAccount(authData.user, name);
+      }
+
+      setProfilePassword("");
+      setProfilePasswordConfirm("");
+      setProfileError("");
+      setShowProfileForm(false);
       return;
     }
 
@@ -1193,6 +1453,12 @@ function App() {
 
   function handleCreateUser(event) {
     event.preventDefault();
+
+    if (isSupabaseConfigured) {
+      setCreateUserError("In shared mode, users create their own accounts from the sign-up form.");
+      return;
+    }
+
     const formData = new FormData(event.currentTarget);
     const name = `${formData.get("firstName") ?? ""} ${formData.get("lastName") ?? ""}`.trim();
     const email = `${formData.get("email") ?? ""}`.trim();
@@ -1214,6 +1480,7 @@ function App() {
       accounts: [...data.accounts, nextUser],
     });
 
+    setCreateUserError("");
     event.currentTarget.reset();
   }
 
@@ -1259,6 +1526,18 @@ function App() {
       : "";
 
   if (!session) {
+    if (isSupabaseConfigured && !authReady) {
+      return (
+        <div className="shell auth-shell">
+          <section className="hero auth-hero">
+            <div className="hero-panel login-panel">
+              <div className="backend-status backend-status--ok">Connecting to Supabase...</div>
+            </div>
+          </section>
+        </div>
+      );
+    }
+
     return (
       <div className="shell auth-shell">
         <section className="hero auth-hero">
@@ -1434,8 +1713,8 @@ function App() {
                 onClick={() => {
                   setProfileName(session.name);
                   setProfileEmail(session.email);
-                  setProfilePassword(session.password);
-                  setProfilePasswordConfirm(session.password);
+                  setProfilePassword("");
+                  setProfilePasswordConfirm("");
                   setProfileError("");
                   setShowProfileForm((current) => !current);
                 }}
@@ -1750,6 +2029,7 @@ function App() {
               <button className="button primary" type="submit">
                 Add user
               </button>
+              {createUserError ? <p className="login-error">{createUserError}</p> : null}
             </form>
           </section>
 
@@ -2519,7 +2799,7 @@ function loadState() {
   }
 }
 
-function loadStateFromRaw(rawData) {
+function loadStateFromRaw(rawData, { includeSeedDefaults = true } = {}) {
   const parsed = applyArchiveRules(rawData);
   const shouldClearExistingLogs = (parsed.actionLogResetVersion ?? 0) < ACTION_LOG_RESET_VERSION;
   const savedItems = (parsed.items ?? []).map((item) => {
@@ -2540,23 +2820,25 @@ function loadStateFromRaw(rawData) {
       updatedAt: normalizeTimestamp(item.updatedAt) || new Date().toISOString(),
     };
   });
-  const missingSeedItems = seedData.items.filter(
-    (seedItem) => !savedItems.some((item) => item.id === seedItem.id),
-  );
   const mergedAccounts = [...(parsed.accounts ?? [])];
-  seedData.accounts.forEach((seedAccount) => {
-    if (!mergedAccounts.some((account) => account.id === seedAccount.id)) {
-      mergedAccounts.push(seedAccount);
-    }
-  });
+
+  if (includeSeedDefaults) {
+    seedData.accounts.forEach((seedAccount) => {
+      if (!mergedAccounts.some((account) => account.id === seedAccount.id)) {
+        mergedAccounts.push(seedAccount);
+      }
+    });
+  }
+
+  const missingSeedItems = includeSeedDefaults
+    ? seedData.items.filter((seedItem) => !savedItems.some((item) => item.id === seedItem.id))
+    : [];
 
   return {
     ...parsed,
     accounts: mergedAccounts.map((account) => {
       const seedAccount = seedData.accounts.find((seed) => seed.id === account.id);
-      const isExactJamilaAdmin =
-        typeof account.email === "string" &&
-        account.email.toLowerCase() === "jamilaleilanikeba@gmail.com";
+      const normalizedEmail = normalizeEmail(account.email ?? seedAccount?.email);
 
       return {
         ...account,
@@ -2570,7 +2852,10 @@ function loadStateFromRaw(rawData) {
           account.id === "admin-1"
             ? "Breedlovejames@yahoo.com"
             : account.email ?? seedAccount?.email ?? "",
-        role: isExactJamilaAdmin ? "admin" : account.role ?? seedAccount?.role ?? "user",
+        role:
+          isAdminEmail(normalizedEmail) || account.role === "admin" || seedAccount?.role === "admin"
+            ? "admin"
+            : "user",
         password: account.password ?? seedAccount?.password ?? "Temp123!",
         clientSince:
           normalizeRequestDate(account.clientSince) ??
@@ -2585,6 +2870,18 @@ function loadStateFromRaw(rawData) {
 
 function saveLocalState(nextState) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
+}
+
+function normalizeEmail(value) {
+  if (!value || typeof value !== "string") {
+    return "";
+  }
+
+  return value.trim().toLowerCase();
+}
+
+function isAdminEmail(email) {
+  return ADMIN_EMAILS.has(normalizeEmail(email));
 }
 
 function serializeAccount(account) {

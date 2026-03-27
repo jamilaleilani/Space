@@ -48,8 +48,9 @@ VITE_SUPABASE_ANON_KEY=your_anon_key
 5. Restart the Vite app.
 
 When those env vars are present, the app will read and write shared account/item
-data through Supabase. If they are missing or Supabase is unreachable, the app
-falls back to local browser storage and shows a status banner.
+data through Supabase and use Supabase Auth for sign in, sign up, sign out, and
+profile password/email changes. If they are missing or Supabase is unreachable,
+the app falls back to local browser storage and shows a status banner.
 
 ## GitHub Pages
 
