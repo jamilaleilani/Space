@@ -1,6 +1,7 @@
 # Inventory Keeper
 
-A local React app for tracking physical items by person and role.
+A React app for tracking physical items by person and role. It can still run in
+local browser mode, but it now also supports a shared Supabase-backed data mode.
 
 ## Features
 
@@ -17,6 +18,7 @@ A local React app for tracking physical items by person and role.
 - Admin dashboard that shows all users, their items, and summary counts
 - Search and tab-based status filtering
 - Browser persistence with `localStorage`
+- Optional shared Supabase backend for accounts and items across browsers
 
 ## Run it
 
@@ -28,6 +30,26 @@ PATH="/Users/jamilaleilani/Documents/New project 7/.local-node/bin:$PATH" npm ru
 ```
 
 Then open the local Vite URL shown in the terminal.
+
+## Shared Supabase setup
+
+To make accounts and items available across browsers for admins and users:
+
+1. Create a Supabase project.
+2. Run the SQL in [supabase/schema.sql](/Users/jamilaleilani/Documents/New%20project%207/supabase/schema.sql).
+3. Copy `.env.example` to `.env`.
+4. Fill in:
+
+```bash
+VITE_SUPABASE_URL=your_project_url
+VITE_SUPABASE_ANON_KEY=your_anon_key
+```
+
+5. Restart the Vite app.
+
+When those env vars are present, the app will read and write shared account/item
+data through Supabase. If they are missing or Supabase is unreachable, the app
+falls back to local browser storage and shows a status banner.
 
 ## GitHub Pages
 
@@ -44,4 +66,5 @@ To publish it:
 
 - `Maya Patel` - User - `maya@example.com` / `Maya123!`
 - `Jordan Lee` - User - `jordan@example.com` / `Jordan123!`
-- `Riley Chen` - Admin - `riley@example.com` / `Admin123!`
+- `David Balaban` - User - `balabdavid@gmail.com` / `Temp123!`
+- `James Breedlove` - Admin - `Breedlovejames@yahoo.com` / `Admin123!`

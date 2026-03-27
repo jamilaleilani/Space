@@ -1,4 +1,5 @@
 import { startTransition, useDeferredValue, useEffect, useState } from "react";
+import { isSupabaseConfigured, supabase } from "./lib/supabase";
 
 const STORAGE_KEY = "inventory-keeper-react-v1";
 const ACTION_CHOICES = ["Store", "Sell", "Dispose"];
@@ -560,6 +561,8 @@ const emptyForm = {
 
 function App() {
   const [data, setData] = useState(loadState);
+  const [backendReady, setBackendReady] = useState(!isSupabaseConfigured);
+  const [backendError, setBackendError] = useState("");
   const [sessionId, setSessionId] = useState("");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -630,14 +633,143 @@ function App() {
 
     if (nextData !== data) {
       setData(nextData);
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextData));
+      persistState(nextData);
     }
   }, [data]);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) {
+      return;
+    }
+
+    let isActive = true;
+
+    async function hydrateFromSupabase() {
+      const loadedState = await fetchSupabaseState();
+
+      if (!isActive) {
+        return;
+      }
+
+      if (loadedState) {
+        setData(applyArchiveRules(loadedState));
+      }
+
+      setBackendReady(true);
+    }
+
+    hydrateFromSupabase();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   function commit(nextData) {
     const preparedData = applyArchiveRules(nextData);
     setData(preparedData);
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(preparedData));
+    persistState(preparedData);
+  }
+
+  function persistState(nextData) {
+    saveLocalState(nextData);
+
+    if (isSupabaseConfigured && supabase && backendReady) {
+      saveSupabaseState(nextData);
+    }
+  }
+
+  async function fetchSupabaseState() {
+    try {
+      const [{ data: accounts, error: accountsError }, { data: items, error: itemsError }] = await Promise.all([
+        supabase.from("app_accounts").select("*"),
+        supabase.from("items").select("*"),
+      ]);
+
+      if (accountsError || itemsError) {
+        throw accountsError ?? itemsError;
+      }
+
+      if ((!accounts || accounts.length === 0) && (!items || items.length === 0)) {
+        await saveSupabaseState(seedData);
+        return loadStateFromRaw(seedData);
+      }
+
+      return loadStateFromRaw({
+        accounts: (accounts ?? []).map(deserializeAccount),
+        items: (items ?? []).map(deserializeItem),
+        actionLogResetVersion: ACTION_LOG_RESET_VERSION,
+      });
+    } catch (error) {
+      setBackendError(error?.message ?? "Unable to reach Supabase. Using local data for now.");
+      return null;
+    }
+  }
+
+  async function saveSupabaseState(nextData) {
+    try {
+      const accountsPayload = nextData.accounts.map(serializeAccount);
+      const itemsPayload = nextData.items.map(serializeItem);
+
+      const accountIds = nextData.accounts.map((account) => account.id);
+      const itemIds = nextData.items.map((item) => item.id);
+
+      const { error: accountsUpsertError } = await supabase.from("app_accounts").upsert(accountsPayload);
+      if (accountsUpsertError) {
+        throw accountsUpsertError;
+      }
+
+      const { error: itemsUpsertError } = await supabase.from("items").upsert(itemsPayload);
+      if (itemsUpsertError) {
+        throw itemsUpsertError;
+      }
+
+      const { data: existingAccounts, error: existingAccountsError } = await supabase
+        .from("app_accounts")
+        .select("id");
+      if (existingAccountsError) {
+        throw existingAccountsError;
+      }
+
+      const staleAccountIds = (existingAccounts ?? [])
+        .map((account) => account.id)
+        .filter((id) => !accountIds.includes(id));
+
+      if (staleAccountIds.length) {
+        const { error: deleteAccountsError } = await supabase
+          .from("app_accounts")
+          .delete()
+          .in("id", staleAccountIds);
+        if (deleteAccountsError) {
+          throw deleteAccountsError;
+        }
+      }
+
+      const { data: existingItems, error: existingItemsError } = await supabase
+        .from("items")
+        .select("id");
+      if (existingItemsError) {
+        throw existingItemsError;
+      }
+
+      const staleItemIds = (existingItems ?? [])
+        .map((item) => item.id)
+        .filter((id) => !itemIds.includes(id));
+
+      if (staleItemIds.length) {
+        const { error: deleteItemsError } = await supabase
+          .from("items")
+          .delete()
+          .in("id", staleItemIds);
+        if (deleteItemsError) {
+          throw deleteItemsError;
+        }
+      }
+
+      setBackendError("");
+    } catch (error) {
+      setBackendError(error?.message ?? "Unable to save changes to Supabase.");
+    }
   }
 
   function resetWorkspace() {
@@ -1144,6 +1276,18 @@ function App() {
           </div>
 
           <div className="hero-panel login-panel">
+            {isSupabaseConfigured ? (
+              <div className={`backend-status ${backendError ? "backend-status--warning" : "backend-status--ok"}`}>
+                {backendError
+                  ? `Shared data unavailable: ${backendError}`
+                  : "Shared Supabase data is connected for this app."}
+              </div>
+            ) : (
+              <div className="backend-status">
+                Supabase is not configured yet. This browser is still using local-only data.
+              </div>
+            )}
+
             <div className="section-heading login-heading">
               <div>
                 <p className="section-label">Login</p>
@@ -1263,6 +1407,18 @@ function App() {
     <div className="shell">
       <section className="panel session-panel">
         <div className="session-panel__inner">
+          {isSupabaseConfigured ? (
+            <div className={`backend-status ${backendError ? "backend-status--warning" : "backend-status--ok"}`}>
+              {backendError
+                ? `Shared data unavailable: ${backendError}`
+                : "Shared Supabase data is connected for this app."}
+            </div>
+          ) : (
+            <div className="backend-status">
+              Supabase is not configured yet. This browser is still using local-only data.
+            </div>
+          )}
+
           <div className="session-card">
             <div>
               <p className="section-label">Space. Inventory</p>
@@ -2348,80 +2504,151 @@ function loadState() {
   const saved = window.localStorage.getItem(STORAGE_KEY);
 
   if (!saved) {
-    return seedData;
+    return loadStateFromRaw(seedData);
   }
 
   try {
-    const parsed = applyArchiveRules(JSON.parse(saved));
-    const shouldClearExistingLogs = (parsed.actionLogResetVersion ?? 0) < ACTION_LOG_RESET_VERSION;
-    const savedItems = (parsed.items ?? []).map((item) => {
-      const isDiningTable = item.id === "item-2";
-
-      return {
-        ...item,
-        image: item.image || SAMPLE_ITEM_IMAGES[item.id] || "",
-        notifications: shouldClearExistingLogs ? [] : normalizeNotifications(item.notifications),
-        returnRequestDate: normalizeRequestDate(item.returnRequestDate),
-        returnRequestWindow: item.returnRequestWindow ?? "",
-        returnRequestType: item.returnRequestType ?? "",
-        completedAt: normalizeTimestamp(item.completedAt ?? item.returnedCompletedAt),
-        storageRequestDate: normalizeRequestDate(item.storageRequestDate),
-        storageRequestWindow: item.storageRequestWindow ?? "",
-        status: isDiningTable ? "Returned" : normalizeStatus(item.status),
-        location: isDiningTable ? "" : item.location,
-        updatedAt: normalizeTimestamp(item.updatedAt) || new Date().toISOString(),
-      };
-    });
-    const missingSeedItems = seedData.items.filter(
-      (seedItem) => !savedItems.some((item) => item.id === seedItem.id),
-    );
-    const mergedAccounts = [...(parsed.accounts ?? [])];
-    seedData.accounts.forEach((seedAccount) => {
-      if (!mergedAccounts.some((account) => account.id === seedAccount.id)) {
-        mergedAccounts.push(seedAccount);
-      }
-    });
-
-    const nextState = {
-      ...parsed,
-      accounts: mergedAccounts.map((account) => {
-        const seedAccount = seedData.accounts.find((seed) => seed.id === account.id);
-        const isExactJamilaAdmin =
-          typeof account.email === "string" &&
-          account.email.toLowerCase() === "jamilaleilanikeba@gmail.com";
-
-        return {
-          ...account,
-          name:
-            account.id === "user-3"
-              ? "David Balaban"
-              : account.id === "admin-1"
-                ? "James Breedlove"
-              : account.name ?? seedAccount?.name ?? "Unnamed user",
-          email:
-            account.id === "admin-1"
-              ? "Breedlovejames@yahoo.com"
-              : account.email ?? seedAccount?.email ?? "",
-          role: isExactJamilaAdmin ? "admin" : account.role ?? seedAccount?.role ?? "user",
-          password: account.password ?? seedAccount?.password ?? "Temp123!",
-          clientSince:
-            normalizeRequestDate(account.clientSince) ??
-            seedAccount?.clientSince ??
-            "2024-01-01",
-        };
-      }),
-      actionLogResetVersion: ACTION_LOG_RESET_VERSION,
-      items: [...savedItems, ...missingSeedItems],
-    };
-
-    if (shouldClearExistingLogs) {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
+    const rawState = JSON.parse(saved);
+    const nextState = loadStateFromRaw(rawState);
+    if ((rawState.actionLogResetVersion ?? 0) < ACTION_LOG_RESET_VERSION) {
+      saveLocalState(nextState);
     }
-
     return nextState;
   } catch {
-    return seedData;
+    return loadStateFromRaw(seedData);
   }
+}
+
+function loadStateFromRaw(rawData) {
+  const parsed = applyArchiveRules(rawData);
+  const shouldClearExistingLogs = (parsed.actionLogResetVersion ?? 0) < ACTION_LOG_RESET_VERSION;
+  const savedItems = (parsed.items ?? []).map((item) => {
+    const isDiningTable = item.id === "item-2";
+
+    return {
+      ...item,
+      image: item.image || SAMPLE_ITEM_IMAGES[item.id] || "",
+      notifications: shouldClearExistingLogs ? [] : normalizeNotifications(item.notifications),
+      returnRequestDate: normalizeRequestDate(item.returnRequestDate),
+      returnRequestWindow: item.returnRequestWindow ?? "",
+      returnRequestType: item.returnRequestType ?? "",
+      completedAt: normalizeTimestamp(item.completedAt ?? item.returnedCompletedAt),
+      storageRequestDate: normalizeRequestDate(item.storageRequestDate),
+      storageRequestWindow: item.storageRequestWindow ?? "",
+      status: isDiningTable ? "Returned" : normalizeStatus(item.status),
+      location: isDiningTable ? "" : item.location,
+      updatedAt: normalizeTimestamp(item.updatedAt) || new Date().toISOString(),
+    };
+  });
+  const missingSeedItems = seedData.items.filter(
+    (seedItem) => !savedItems.some((item) => item.id === seedItem.id),
+  );
+  const mergedAccounts = [...(parsed.accounts ?? [])];
+  seedData.accounts.forEach((seedAccount) => {
+    if (!mergedAccounts.some((account) => account.id === seedAccount.id)) {
+      mergedAccounts.push(seedAccount);
+    }
+  });
+
+  return {
+    ...parsed,
+    accounts: mergedAccounts.map((account) => {
+      const seedAccount = seedData.accounts.find((seed) => seed.id === account.id);
+      const isExactJamilaAdmin =
+        typeof account.email === "string" &&
+        account.email.toLowerCase() === "jamilaleilanikeba@gmail.com";
+
+      return {
+        ...account,
+        name:
+          account.id === "user-3"
+            ? "David Balaban"
+            : account.id === "admin-1"
+              ? "James Breedlove"
+            : account.name ?? seedAccount?.name ?? "Unnamed user",
+        email:
+          account.id === "admin-1"
+            ? "Breedlovejames@yahoo.com"
+            : account.email ?? seedAccount?.email ?? "",
+        role: isExactJamilaAdmin ? "admin" : account.role ?? seedAccount?.role ?? "user",
+        password: account.password ?? seedAccount?.password ?? "Temp123!",
+        clientSince:
+          normalizeRequestDate(account.clientSince) ??
+          seedAccount?.clientSince ??
+          "2024-01-01",
+      };
+    }),
+    actionLogResetVersion: ACTION_LOG_RESET_VERSION,
+    items: [...savedItems, ...missingSeedItems],
+  };
+}
+
+function saveLocalState(nextState) {
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
+}
+
+function serializeAccount(account) {
+  return {
+    id: account.id,
+    name: account.name,
+    role: account.role,
+    email: account.email,
+    password: account.password,
+    client_since: normalizeRequestDate(account.clientSince) || "2024-01-01",
+  };
+}
+
+function deserializeAccount(account) {
+  return {
+    id: account.id,
+    name: account.name,
+    role: account.role,
+    email: account.email,
+    password: account.password,
+    clientSince: normalizeRequestDate(account.client_since ?? account.clientSince) || "2024-01-01",
+  };
+}
+
+function serializeItem(item) {
+  return {
+    id: item.id,
+    owner_id: item.ownerId,
+    name: item.name,
+    category: item.category,
+    description: item.description ?? "",
+    status: normalizeStatus(item.status),
+    location: item.location ?? "",
+    storage_request_date: normalizeRequestDate(item.storageRequestDate),
+    storage_request_window: item.storageRequestWindow ?? "",
+    return_request_date: normalizeRequestDate(item.returnRequestDate),
+    return_request_window: item.returnRequestWindow ?? "",
+    return_request_type: item.returnRequestType ?? "",
+    completed_at: normalizeTimestamp(item.completedAt),
+    image: item.image ?? "",
+    notifications: normalizeNotifications(item.notifications),
+    updated_at: normalizeTimestamp(item.updatedAt) || new Date().toISOString(),
+  };
+}
+
+function deserializeItem(item) {
+  return {
+    id: item.id,
+    ownerId: item.owner_id ?? item.ownerId ?? "",
+    name: item.name,
+    category: item.category ?? "",
+    description: item.description ?? "",
+    status: normalizeStatus(item.status),
+    location: item.location ?? "",
+    storageRequestDate: normalizeRequestDate(item.storage_request_date ?? item.storageRequestDate),
+    storageRequestWindow: item.storage_request_window ?? item.storageRequestWindow ?? "",
+    returnRequestDate: normalizeRequestDate(item.return_request_date ?? item.returnRequestDate),
+    returnRequestWindow: item.return_request_window ?? item.returnRequestWindow ?? "",
+    returnRequestType: item.return_request_type ?? item.returnRequestType ?? "",
+    completedAt: normalizeTimestamp(item.completed_at ?? item.completedAt),
+    image: item.image ?? "",
+    notifications: normalizeNotifications(item.notifications),
+    updatedAt: normalizeTimestamp(item.updated_at ?? item.updatedAt) || new Date().toISOString(),
+  };
 }
 
 function makeIllustration({ title, background, accent, detail, body }) {

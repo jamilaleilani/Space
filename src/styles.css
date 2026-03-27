@@ -176,6 +176,28 @@ textarea {
   background: rgba(255, 255, 255, 0.12);
 }
 
+.backend-status {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 204, 0, 0.22);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 204, 0, 0.08);
+  color: #facc15;
+  line-height: 1.4;
+}
+
+.backend-status--ok {
+  border-color: rgba(134, 239, 172, 0.22);
+  background: rgba(34, 197, 94, 0.08);
+  color: #bbf7d0;
+}
+
+.backend-status--warning {
+  border-color: rgba(248, 113, 113, 0.28);
+  background: rgba(239, 68, 68, 0.08);
+  color: #fca5a5;
+}
+
 .session-panel__inner,
 .pill-row,
 .form-grid,
