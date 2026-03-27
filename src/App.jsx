@@ -2766,6 +2766,10 @@ function deserializeAccount(account) {
 }
 
 function serializeItem(item) {
+  const storageRequestDate = normalizeRequestDate(item.storageRequestDate);
+  const returnRequestDate = normalizeRequestDate(item.returnRequestDate);
+  const completedAt = normalizeTimestamp(item.completedAt);
+
   return {
     id: item.id,
     owner_id: item.ownerId,
@@ -2774,12 +2778,12 @@ function serializeItem(item) {
     description: item.description ?? "",
     status: normalizeStatus(item.status),
     location: item.location ?? "",
-    storage_request_date: normalizeRequestDate(item.storageRequestDate),
+    storage_request_date: storageRequestDate || null,
     storage_request_window: item.storageRequestWindow ?? "",
-    return_request_date: normalizeRequestDate(item.returnRequestDate),
+    return_request_date: returnRequestDate || null,
     return_request_window: item.returnRequestWindow ?? "",
     return_request_type: item.returnRequestType ?? "",
-    completed_at: normalizeTimestamp(item.completedAt),
+    completed_at: completedAt || null,
     image: item.image ?? "",
     notifications: normalizeNotifications(item.notifications),
     updated_at: normalizeTimestamp(item.updatedAt) || new Date().toISOString(),
