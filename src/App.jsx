@@ -236,14 +236,6 @@ const seedData = {
       password: "Temp123!",
       clientSince: "2026-03-26",
     },
-    {
-      id: "admin-1",
-      name: "James Breedlove",
-      role: "admin",
-      email: "Breedlovejames@yahoo.com",
-      password: "Admin123!",
-      clientSince: "2023-01-15",
-    },
   ],
   items: [],
 };
@@ -2549,13 +2541,8 @@ function loadStateFromRaw(rawData, { includeSeedDefaults = true } = {}) {
         name:
           account.id === "user-3"
             ? "David Balaban"
-            : account.id === "admin-1"
-              ? "James Breedlove"
             : account.name ?? seedAccount?.name ?? "Unnamed user",
-        email:
-          account.id === "admin-1"
-            ? "Breedlovejames@yahoo.com"
-            : account.email ?? seedAccount?.email ?? "",
+        email: account.email ?? seedAccount?.email ?? "",
         role:
           isAdminEmail(normalizedEmail) || account.role === "admin" || seedAccount?.role === "admin"
             ? "admin"
