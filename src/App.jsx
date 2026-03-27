@@ -258,6 +258,8 @@ function App() {
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupPasswordConfirm, setSignupPasswordConfirm] = useState("");
+  const [signupAcceptedTerms, setSignupAcceptedTerms] = useState(false);
+  const [showSignupTerms, setShowSignupTerms] = useState(false);
   const [signupError, setSignupError] = useState("");
   const [showProfileForm, setShowProfileForm] = useState(false);
   const [profileName, setProfileName] = useState("");
@@ -652,6 +654,8 @@ function App() {
     setSignupEmail("");
     setSignupPassword("");
     setSignupPasswordConfirm("");
+    setSignupAcceptedTerms(false);
+    setShowSignupTerms(false);
     setSignupError("");
     setShowProfileForm(false);
     setProfileName(nextSession?.name ?? "");
@@ -678,6 +682,8 @@ function App() {
     setLoginPassword("");
     setLoginError("");
     setSignupError("");
+    setSignupAcceptedTerms(false);
+    setShowSignupTerms(false);
     setShowProfileForm(false);
     setProfileName("");
     setProfileEmail("");
@@ -745,6 +751,11 @@ function App() {
       return;
     }
 
+    if (!signupAcceptedTerms) {
+      setSignupError("Please review and accept the terms and conditions before creating an account.");
+      return;
+    }
+
     const emailInUse = data.accounts.some((account) => account.email.toLowerCase() === email);
     if (emailInUse) {
       setSignupError("An account with that email already exists.");
@@ -776,6 +787,8 @@ function App() {
       setSignupEmail("");
       setSignupPassword("");
       setSignupPasswordConfirm("");
+      setSignupAcceptedTerms(false);
+      setShowSignupTerms(false);
       return;
     }
 
@@ -1362,6 +1375,25 @@ function App() {
                 />
               </label>
 
+              <div className="terms-callout">
+                <p className="terms-callout__text">
+                  You must review and accept the terms and conditions before creating an account.
+                </p>
+                <button
+                  className="button ghost"
+                  type="button"
+                  onClick={() => {
+                    setSignupError("");
+                    setShowSignupTerms(true);
+                  }}
+                >
+                  {signupAcceptedTerms ? "Review terms again" : "Read terms and conditions"}
+                </button>
+                <p className={`terms-callout__status ${signupAcceptedTerms ? "terms-callout__status--accepted" : ""}`}>
+                  {signupAcceptedTerms ? "Terms accepted" : "Terms not yet accepted"}
+                </p>
+              </div>
+
               {signupError ? <p className="login-error">{signupError}</p> : null}
 
               <button className="button secondary" type="submit">
@@ -1388,6 +1420,78 @@ function App() {
             </div>
           </div>
         </section>
+
+        {showSignupTerms ? (
+          <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="terms-title">
+            <button
+              className="modal-backdrop"
+              type="button"
+              aria-label="Close terms and conditions"
+              onClick={() => setShowSignupTerms(false)}
+            />
+            <div className="panel modal-card terms-modal">
+              <div className="section-heading">
+                <div>
+                  <p className="section-label">Account signup</p>
+                  <h2 id="terms-title">Terms and conditions</h2>
+                </div>
+              </div>
+
+              <div className="terms-copy">
+                <p>
+                  By creating an account, you confirm that the information you provide is accurate
+                  and that you will use this inventory platform only for your own account or for
+                  authorized business purposes.
+                </p>
+                <p>
+                  You agree not to upload unlawful, harmful, or misleading content, and you
+                  understand that account access, item records, and storage requests may be reviewed
+                  by authorized administrators.
+                </p>
+                <p>
+                  You are responsible for keeping your password secure, for reviewing your item
+                  details before submitting requests, and for notifying an administrator if you
+                  believe your account has been accessed improperly.
+                </p>
+                <p>
+                  This service is provided as-is for inventory coordination. Availability, stored
+                  item status, and account access may be updated or restricted if misuse, fraud, or
+                  security concerns are detected.
+                </p>
+              </div>
+
+              <label className="terms-checkbox">
+                <input
+                  type="checkbox"
+                  checked={signupAcceptedTerms}
+                  onChange={(event) => setSignupAcceptedTerms(event.target.checked)}
+                />
+                <span>I have read and agree to the terms and conditions.</span>
+              </label>
+
+              <div className="button-row">
+                <button
+                  className="button primary"
+                  type="button"
+                  disabled={!signupAcceptedTerms}
+                  onClick={() => setShowSignupTerms(false)}
+                >
+                  Continue
+                </button>
+                <button
+                  className="button ghost"
+                  type="button"
+                  onClick={() => {
+                    setSignupAcceptedTerms(false);
+                    setShowSignupTerms(false);
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     );
   }

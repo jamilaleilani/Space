@@ -543,7 +543,8 @@ textarea {
 .return-form,
 .return-summary,
 .activity-log,
-.notification-summary {
+.notification-summary,
+.terms-callout {
   padding: 14px;
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.04);
@@ -589,6 +590,58 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.terms-callout {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.terms-callout__text,
+.terms-callout__status,
+.terms-copy p {
+  margin: 0;
+}
+
+.terms-callout__status {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.terms-callout__status--accepted {
+  color: #bbf7d0;
+}
+
+.terms-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.terms-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: min(44vh, 360px);
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.terms-checkbox {
+  display: flex;
+  align-items: start;
+  gap: 10px;
+  width: 100%;
+  color: var(--text);
+}
+
+.terms-checkbox input {
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  padding: 0;
 }
 
 .activity-log__time {
